@@ -1,10 +1,84 @@
 #!/usr/bin/python3
 
 import sys
+import datetime
 import ifcopenshell
 
-path_base, path_local, path_remote, path_merged = sys.argv[1:5]
 
-base = ifcopenshell.open(path_base)
-local = ifcopenshell.open(path_local)
-remote = ifcopenshell.open(path_remote)
+class Ifc:
+    def __init__(self, **args):
+        self.file = None
+        self.path = None
+        self.ids = {}
+        self.added = {}
+        self.deleted = {}
+        self.modified = {}
+        for arg in args:
+            self.__dict__[arg] = args[arg]
+        self.file = ifcopenshell.open(self.path)
+        for entity in self.file:
+            self.ids[entity.id()] = entity
+
+    def compare(self, other):
+        for entity in self.ids:
+            if not entity in other.ids:
+                self.added[entity] = entity
+            elif str(self.ids[entity]) != str(other.ids[entity]):
+                self.modified[entity] = entity
+        for entity in other.ids:
+            if not entity in self.ids:
+                self.deleted[entity] = entity
+
+
+base = Ifc(path=sys.argv[1])
+local = Ifc(path=sys.argv[2])
+remote = Ifc(path=sys.argv[3])
+merged = Ifc(path=sys.argv[1])  # note: initially the same as base
+
+local.compare(base)
+remote.compare(base)
+
+# TODO if both files have added entities, renumber local added entities to make
+# space and start again
+
+# TODO copy added entities
+
+if local.added or remote.added:
+    print("new entities found! bailing out")
+    sys.exit(1)
+
+# TODO delete deleted entities unless other branch has modified this entity
+
+if local.deleted or remote.deleted:
+    print("deleted entities found! bailing out")
+    sys.exit(1)
+
+# TODO if entity is modified in both, try and merge attributes
+
+if local.modified:
+    for entity in local.modified:
+        if entity in remote.modified:
+            print("entity modified in both! bailing out")
+            sys.exit(1)
+        for index in range(len(local.file.by_id(entity))):
+            merged.file.by_id(entity)[index] = local.file.by_id(entity)[index]
+
+if remote.modified:
+    for entity in remote.modified:
+        if entity in local.modified:
+            print("entity modified in both! bailing out")
+            sys.exit(1)
+        for index in range(len(local.file.by_id(entity))):
+            merged.file.by_id(entity)[index] = remote.file.by_id(entity)[index]
+
+# success
+merged.file.wrapped_data.header.file_name.time_stamp = (
+    datetime.datetime.utcnow()
+    .replace(tzinfo=datetime.timezone.utc)
+    .astimezone()
+    .replace(microsecond=0)
+    .isoformat()
+)
+merged.file.write(sys.argv[4])
+
+sys.exit(0)
