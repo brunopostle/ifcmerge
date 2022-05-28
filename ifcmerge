@@ -1,0 +1,10 @@
+#!/usr/bin/python3
+
+import sys
+import ifcopenshell
+
+path_base, path_local, path_remote, path_merged = sys.argv[1:5]
+
+base = ifcopenshell.open(path_base)
+local = ifcopenshell.open(path_local)
+remote = ifcopenshell.open(path_remote)
