@@ -1,12 +1,12 @@
 ISO-10303-21;
 HEADER;
 FILE_DESCRIPTION(('ViewDefinition[DesignTransferView]'),'2;1');
-FILE_NAME('test_model.ifc','2022-05-28T10:46:50+01:00',(),(),'IfcOpenShell 0.7.0','BlenderBIM 0.0.999999','Nobody');
+FILE_NAME('test_model.ifc','2022-05-28T11:04:18+01:00',(),(),'IfcOpenShell 0.7.0','BlenderBIM 0.0.999999','Nobody');
 FILE_SCHEMA(('IFC4'));
 ENDSEC;
 DATA;
 #1=IFCPERSON('HSeldon','Seldon','Hari',$,$,$,$,$);
-#2=IFCORGANIZATION('APTR','Aperture Science',$,$,$);
+#2=IFCORGANIZATION('OC','OmniCorp',$,$,$);
 #3=IFCPROJECT('1iw$7u2XH9WvwkANmsGdJw',$,'Homemaker Project',$,$,$,$,(#13),#7);
 #4=IFCSIUNIT(*,.LENGTHUNIT.,$,.METRE.);
 #5=IFCSIUNIT(*,.AREAUNIT.,$,.SQUARE_METRE.);
