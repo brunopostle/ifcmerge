@@ -8,7 +8,7 @@ Create a branch, edit and commit some changes to an IFC file:
 
     git branch my_branch
     git switch my_branch
-    git commit
+    git commit project.ifc
 
 Switch back to the previous branch and try and merge the new branch:
 
@@ -23,6 +23,7 @@ configure git to use ifcmerge:
 Try and resolve the conflict:
 
      git mergetool --tool=ifcmerge
+     git commit -i project.ifc
 
 You can always abandon the merge:
 
