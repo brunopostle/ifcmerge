@@ -29,6 +29,9 @@ class Ifc:
             if not entity in self.ids:
                 self.deleted[entity] = entity
 
+    def last(self):
+        return sorted(self.ids)[-1]
+
 
 base = Ifc(path=sys.argv[1])
 local = Ifc(path=sys.argv[2])
@@ -38,38 +41,60 @@ merged = Ifc(path=sys.argv[1])  # note: initially the same as base
 local.compare(base)
 remote.compare(base)
 
-# TODO if both files have added entities, renumber local added entities to make
-# space and start again
+# TODO if both files have added entities, renumber local added entities to make space
+# See ifcpatch/recipes/Optimise.py
 
-# TODO copy added entities
+index = remote.last() + 1
+for entity in local.added:
+    if entity in remote.added:
+        print("new entities found with duplicate ids! bailing out")
+        sys.exit(1)
+        index += 1
 
-if local.added or remote.added:
-    print("new entities found! bailing out")
-    sys.exit(1)
+# local may have been renumbered
+local.compare(base)
 
-# TODO delete deleted entities unless other branch has modified this entity
+# copy added entities
+# FIXME this breaks, give them the same id as before
 
-if local.deleted or remote.deleted:
-    print("deleted entities found! bailing out")
-    sys.exit(1)
+for entity in local.added:
+    merged.file.create_entity(local.file[entity].is_a(), *local.file[entity])
 
+for entity in remote.added:
+    merged.file.create_entity(remote.file[entity].is_a(), *remote.file[entity])
+
+# delete deleted entities
+
+for entity in local.deleted:
+    if entity in remote.modified:
+        print("local deleted entity modified in remote! bailing out")
+        sys.exit(1)
+    else:
+        merged.file.remove(merged.file.by_id(entity))
+
+for entity in remote.deleted:
+    if entity in local.modified:
+        print("remote deleted entity modified in local! bailing out")
+        sys.exit(1)
+    else:
+        merged.file.remove(merged.file.by_id(entity))
+
+# update modified entities
 # TODO if entity is modified in both, try and merge attributes
 
-if local.modified:
-    for entity in local.modified:
-        if entity in remote.modified:
-            print("entity modified in both! bailing out")
-            sys.exit(1)
-        for index in range(len(local.file.by_id(entity))):
-            merged.file.by_id(entity)[index] = local.file.by_id(entity)[index]
+for entity in local.modified:
+    if entity in remote.modified:
+        print("entity modified in both! bailing out")
+        sys.exit(1)
+    for index in range(len(local.file.by_id(entity))):
+        merged.file.by_id(entity)[index] = local.file.by_id(entity)[index]
 
-if remote.modified:
-    for entity in remote.modified:
-        if entity in local.modified:
-            print("entity modified in both! bailing out")
-            sys.exit(1)
-        for index in range(len(local.file.by_id(entity))):
-            merged.file.by_id(entity)[index] = remote.file.by_id(entity)[index]
+for entity in remote.modified:
+    if entity in local.modified:
+        print("entity modified in both! bailing out")
+        sys.exit(1)
+    for index in range(len(local.file.by_id(entity))):
+        merged.file.by_id(entity)[index] = remote.file.by_id(entity)[index]
 
 # success
 merged.file.wrapped_data.header.file_name.time_stamp = (
