@@ -1,112 +1,221 @@
-#!/usr/bin/python3
+#!/usr/bin/perl
 
-import sys
-import datetime
-import ifcopenshell
+use strict;
+use warnings;
+use DateTime;
+use DateTime::TimeZone;
+use 5.010;
 
+die "Usage: $0 base.ifc local.ifc remote.ifc merged.ifc" unless scalar(@ARGV) == 4;
 
-class Ifc:
-    def __init__(self, **args):
-        self.file = None
-        self.path = None
-        self.ids = {}
-        self.added = {}
-        self.deleted = {}
-        self.modified = {}
-        for arg in args:
-            self.__dict__[arg] = args[arg]
-        self.file = ifcopenshell.open(self.path)
-        for entity in self.file:
-            self.ids[entity.id()] = entity
+my $base = Ifc->new;
+$base->load($ARGV[0]);
+my $local = Ifc->new;
+$local->load($ARGV[1]);
+my $remote = Ifc->new;
+$remote->load($ARGV[2]);
+my $merged = Ifc->new;
+$merged->load($ARGV[0]); # note: initially the same as base
 
-    def compare(self, other):
-        for entity in self.ids:
-            if not entity in other.ids:
-                self.added[entity] = entity
-            elif str(self.ids[entity]) != str(other.ids[entity]):
-                self.modified[entity] = entity
-        for entity in other.ids:
-            if not entity in self.ids:
-                self.deleted[entity] = entity
-        self.added = sorted(self.added)
-        self.modified = sorted(self.modified)
-        self.deleted = sorted(self.deleted)
+$local->compare($base);
+$remote->compare($base);
 
-    def last(self):
-        return sorted(self.ids)[-1]
+# if both files have added entities, renumber local added entities to make space
 
+my $offset = $remote->last - $base->last;
+my $max = $base->last;
+if ($offset > 0)
+{
+    for my $id (reverse ($local->added_ids))
+    {
+        my $text = $local->{file}->{$id};
+        $text =~ s/#([0-9]*)/'#'. _add_offset($1, $max, $offset)/ge;
+        $local->{file}->{_add_offset($id, $max, $offset)} = $text;
+        delete $local->{file}->{$id};
+    }
+    for my $id ($local->modified_ids)
+    {
+        my $text = $local->{file}->{$id};
+        $text =~ s/#([0-9]*)/'#'. _add_offset($1, $max, $offset)/ge;
+        $local->{file}->{$id} = $text;
+    }
+}
 
-base = Ifc(path=sys.argv[1])
-local = Ifc(path=sys.argv[2])
-remote = Ifc(path=sys.argv[3])
-merged = Ifc(path=sys.argv[1])  # note: initially the same as base
+sub _add_offset
+{
+    my ($id, $max, $offset) = @_;
+    return $id + $offset if $id > $max;
+    return $id;
+}
 
-local.compare(base)
-remote.compare(base)
-
-# TODO if both files have added entities, renumber local added entities to make space
-# See ifcpatch/recipes/Optimise.py
-
-index = remote.last() + 1
-for entity in local.added:
-    if entity in remote.added:
-        print("new entities found with duplicate ids! bailing out")
-        sys.exit(1)
-        index += 1
-
-# local may have been renumbered
-local.compare(base)
+$local->compare($base); # local may have been renumbered
 
 # copy added entities
-# FIXME this breaks, give them the same id as before
 
-for entity in local.added:
-    merged.file.create_entity(local.file[entity].is_a(), *local.file[entity])
-
-for entity in remote.added:
-    merged.file.create_entity(remote.file[entity].is_a(), *remote.file[entity])
+for my $id ($local->added_ids)
+{
+    $merged->{file}->{$id} = $local->{file}->{$id};
+}
+for my $id ($remote->added_ids)
+{
+    $merged->{file}->{$id} = $remote->{file}->{$id};
+}
 
 # delete deleted entities
 
-for entity in local.deleted:
-    if entity in remote.modified:
-        print("local deleted entity modified in remote! bailing out")
-        sys.exit(1)
-    else:
-        merged.file.remove(merged.file.by_id(entity))
-
-for entity in remote.deleted:
-    if entity in local.modified:
-        print("remote deleted entity modified in local! bailing out")
-        sys.exit(1)
-    else:
-        merged.file.remove(merged.file.by_id(entity))
+for my $id ($local->deleted_ids)
+{
+    if (defined $remote->{modified}->{$id})
+    {
+        die "local deleted entity #$id modified in remote! bailing out";
+    }
+    else
+    {
+        delete $merged->{file}->{$id};
+    }
+}
+for my $id ($remote->deleted_ids)
+{
+    if (defined $local->{modified}->{$id})
+    {
+        die "remote deleted entity #$id modified in local! bailing out";
+    }
+    else
+    {
+        delete $merged->{file}->{$id};
+    }
+}
 
 # update modified entities
 # TODO if entity is modified in both, try and merge attributes
 
-for entity in local.modified:
-    if entity in remote.modified:
-        print("entity modified in both! bailing out")
-        sys.exit(1)
-    for index in range(len(local.file.by_id(entity))):
-        merged.file.by_id(entity)[index] = local.file.by_id(entity)[index]
+for my $id ($local->modified_ids)
+{
+    $merged->{file}->{$id} = $local->{file}->{$id};
+}
+for my $id ($remote->modified_ids)
+{
+    if (defined $local->{modified}->{$id})
+    {
+        warn "entity #$id modified in both! using remote version";
+    }
+    $merged->{file}->{$id} = $remote->{file}->{$id};
+}
 
-for entity in remote.modified:
-    if entity in local.modified:
-        print("entity modified in both! bailing out")
-        sys.exit(1)
-    for index in range(len(local.file.by_id(entity))):
-        merged.file.by_id(entity)[index] = remote.file.by_id(entity)[index]
+my $dt = DateTime->now;
+my $tz = DateTime::TimeZone->new(name => 'local');
+my $tz_offset = $tz->offset_as_string($tz->offset_for_datetime($dt));
+$tz_offset =~ s/(..)(..)$/$1:$2/;
+my $now = $dt.$tz_offset;
 
 # success
-merged.file.wrapped_data.header.file_name.time_stamp = (
-    datetime.datetime.utcnow()
-    .replace(tzinfo=datetime.timezone.utc)
-    .astimezone()
-    .replace(microsecond=0)
-    .isoformat()
-)
-merged.file.write(sys.argv[4])
 
-sys.exit(0)
+open my $OUT, '>', $ARGV[3] or die "$!";
+for my $line (@{$merged->{headers}})
+{
+    if ($line =~ /^FILE_NAME/)
+    {
+        $line =~ s/....-..-..T..:..:..[+-]..:../$now/;
+    }
+    print $OUT $line;
+    if ($line =~ /^DATA;/)
+    {
+        for my $id ($merged->file_ids)
+        {
+            say $OUT "#$id=". $merged->{file}->{$id} .";";
+        }
+    }
+}
+
+0;
+
+package Ifc;
+
+sub new
+{
+    my $class = shift;
+    my $self = {path => '/dev/null', headers => [],
+        file => {}, added => {}, deleted => {}, modified => {}};
+    bless $self, $class;
+    return $self;
+}
+
+sub load
+{
+    my $self = shift;
+    my $path = shift;
+    open my $IN, '<', $path or die "$!";
+    for my $line (<$IN>)
+    {
+        if ($line =~ /^#([0-9]+)=(.*);/)
+        {
+            $self->{file}->{$1} = $2;
+        }
+        elsif ($line =~ /\/\*.*\*\//)
+        {
+            # we discard comments
+        }
+        else
+        {
+            push @{$self->{headers}}, $line;
+        }
+    }
+    close $IN;
+}
+
+sub compare
+{
+    my ($self, $other) = @_;
+    $self->{added} = {};
+    $self->{modified} = {};
+    $self->{deleted} = {};
+    for my $id ($self->file_ids)
+    {
+        if (not defined $other->{file}->{$id})
+        {
+            $self->{added}->{$id} = 1;
+        }
+        elsif ($self->{file}->{$id} ne $other->{file}->{$id})
+        {
+            $self->{modified}->{$id} = 1;
+        }
+    }
+    for my $id ($other->file_ids)
+    {
+        if (not defined $self->{file}->{$id})
+        {
+            $self->{deleted}->{$id} = 1;
+        }
+    }
+}
+
+sub last
+{
+    my $self = shift;
+    my @sorted = sort {$a <=> $b} $self->file_ids;
+    return $sorted[-1];
+}
+
+sub file_ids
+{
+    my $self = shift;
+    return sort {$a <=> $b} keys %{$self->{file}};
+}
+
+sub added_ids
+{
+    my $self = shift;
+    return sort {$a <=> $b} keys %{$self->{added}};
+}
+
+sub modified_ids
+{
+    my $self = shift;
+    return sort {$a <=> $b} keys %{$self->{modified}};
+}
+
+sub deleted_ids
+{
+    my $self = shift;
+    return sort {$a <=> $b} keys %{$self->{deleted}};
+}
