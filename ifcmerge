@@ -28,6 +28,9 @@ class Ifc:
         for entity in other.ids:
             if not entity in self.ids:
                 self.deleted[entity] = entity
+        self.added = sorted(self.added)
+        self.modified = sorted(self.modified)
+        self.deleted = sorted(self.deleted)
 
     def last(self):
         return sorted(self.ids)[-1]
