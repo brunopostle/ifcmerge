@@ -102,30 +102,9 @@ for my $id ($remote->modified_ids)
     $merged->{file}->{$id} = $remote->{file}->{$id};
 }
 
-my $dt = DateTime->now;
-my $tz = DateTime::TimeZone->new(name => 'local');
-my $tz_offset = $tz->offset_as_string($tz->offset_for_datetime($dt));
-$tz_offset =~ s/(..)(..)$/$1:$2/;
-my $now = $dt.$tz_offset;
-
 # success
 
-open my $OUT, '>', $ARGV[3] or die "$!";
-for my $line (@{$merged->{headers}})
-{
-    if ($line =~ /^FILE_NAME/)
-    {
-        $line =~ s/....-..-..T..:..:..[+-]..:../$now/;
-    }
-    print $OUT $line;
-    if ($line =~ /^DATA;/)
-    {
-        for my $id ($merged->file_ids)
-        {
-            say $OUT "#$id=". $merged->{file}->{$id} .";";
-        }
-    }
-}
+$merged->write($ARGV[3]);
 
 0;
 
@@ -134,8 +113,7 @@ package Ifc;
 sub new
 {
     my $class = shift;
-    my $self = {path => '/dev/null', headers => [],
-        file => {}, added => {}, deleted => {}, modified => {}};
+    my $self = {headers => [], file => {}, added => {}, deleted => {}, modified => {}};
     bless $self, $class;
     return $self;
 }
@@ -161,6 +139,33 @@ sub load
         }
     }
     close $IN;
+}
+
+sub write
+{
+    my $self = shift;
+    my $path = shift;
+    my $dt = DateTime->now;
+    my $tz = DateTime::TimeZone->new(name => 'local');
+    my $tz_offset = $tz->offset_as_string($tz->offset_for_datetime($dt));
+    $tz_offset =~ s/(..)(..)$/$1:$2/;
+    my $now = $dt.$tz_offset;
+    open my $OUT, '>', $path or die "$!";
+    for my $line (@{$self->{headers}})
+    {
+        if ($line =~ /^FILE_NAME/)
+        {
+            $line =~ s/....-..-..T..:..:..[+-]..:../$now/;
+        }
+        print $OUT $line;
+        if ($line =~ /^DATA;/)
+        {
+            for my $id ($self->file_ids)
+            {
+                say $OUT "#$id=". $self->{file}->{$id} .";";
+            }
+        }
+    }
 }
 
 sub compare
