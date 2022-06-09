@@ -29,23 +29,16 @@ if ($offset > 0)
     for my $id (reverse ($local->added_ids))
     {
         my $text = $local->{file}->{$id};
-        $text =~ s/#([0-9]*)/'#'. _add_offset($1, $max, $offset)/ge;
+        $text =~ s/#([0-9]+)/'#'. _add_offset($1, $max, $offset)/ge;
         $local->{file}->{_add_offset($id, $max, $offset)} = $text;
         delete $local->{file}->{$id};
     }
     for my $id ($local->modified_ids)
     {
         my $text = $local->{file}->{$id};
-        $text =~ s/#([0-9]*)/'#'. _add_offset($1, $max, $offset)/ge;
+        $text =~ s/#([0-9]+)/'#'. _add_offset($1, $max, $offset)/ge;
         $local->{file}->{$id} = $text;
     }
-}
-
-sub _add_offset
-{
-    my ($id, $max, $offset) = @_;
-    return $id + $offset if $id > $max;
-    return $id;
 }
 
 $local->compare($base); # local may have been renumbered
@@ -107,6 +100,13 @@ for my $id ($remote->modified_ids)
 $merged->write($ARGV[3]);
 
 0;
+
+sub _add_offset
+{
+    my ($id, $max, $offset) = @_;
+    return $id + $offset if $id > $max;
+    return $id;
+}
 
 package Ifc;
 
