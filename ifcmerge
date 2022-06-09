@@ -29,23 +29,16 @@ if ($offset > 0)
     for my $id (reverse ($local->added_ids))
     {
         my $text = $local->{file}->{$id};
-        $text =~ s/#([0-9]*)/'#'. _add_offset($1, $max, $offset)/ge;
+        $text =~ s/#([0-9]+)/'#'. _add_offset($1, $max, $offset)/ge;
         $local->{file}->{_add_offset($id, $max, $offset)} = $text;
         delete $local->{file}->{$id};
     }
     for my $id ($local->modified_ids)
     {
         my $text = $local->{file}->{$id};
-        $text =~ s/#([0-9]*)/'#'. _add_offset($1, $max, $offset)/ge;
+        $text =~ s/#([0-9]+)/'#'. _add_offset($1, $max, $offset)/ge;
         $local->{file}->{$id} = $text;
     }
-}
-
-sub _add_offset
-{
-    my ($id, $max, $offset) = @_;
-    return $id + $offset if $id > $max;
-    return $id;
 }
 
 $local->compare($base); # local may have been renumbered
@@ -87,19 +80,93 @@ for my $id ($remote->deleted_ids)
 }
 
 # update modified entities
-# TODO if entity is modified in both, try and merge attributes
 
 for my $id ($local->modified_ids)
 {
+    my ($base_class, @base_attr) = $base->class_attributes($id);
+    my ($local_class, @local_attr) = $local->class_attributes($id);
+    die "entity #$id class changed in local! bailing out" if ($base_class ne $local_class);
     $merged->{file}->{$id} = $local->{file}->{$id};
 }
 for my $id ($remote->modified_ids)
 {
+    my ($base_class, @base_attr) = $base->class_attributes($id);
+    my ($remote_class, @remote_attr) = $remote->class_attributes($id);
+    die "entity #$id class changed in remote! bailing out" if ($base_class ne $remote_class);
     if (defined $local->{modified}->{$id})
     {
-        warn "entity #$id modified in both! using remote version";
+        # entity is modified in both, try and merge attributes
+        my ($local_class, @local_attr) = $local->class_attributes($id);
+        my @merged_attr;
+        for my $i (0 .. scalar(@base_attr) -1)
+        {
+            if ($base_attr[$i] eq $local_attr[$i]
+            and $base_attr[$i] eq $remote_attr[$i])
+            {
+                # simple case attribute not modified
+                $merged_attr[$i] = $base_attr[$i];
+            }
+            elsif ($base_attr[$i] ne $local_attr[$i]
+               and $base_attr[$i] ne $remote_attr[$i]
+               and $local_attr[$i] ne $remote_attr[$i])
+            {
+                # attribute modified in local and remote
+                if ($base_attr[$i] =~ /^\([#,0-9]*\)$/)
+                {
+                    # attribute is a list of ids
+                    my @base_ids = $base_attr[$i] =~ /(#[0-9]+)/g;
+                    my @local_ids = $local_attr[$i] =~ /(#[0-9]+)/g;
+                    my @remote_ids = $remote_attr[$i] =~ /(#[0-9]+)/g;
+                    my (%base_ids, %local_ids, %remote_ids, %merged_ids);
+                    $base_ids{$_} = 1 for @base_ids;
+                    $local_ids{$_} = 1 for @local_ids;
+                    $remote_ids{$_} = 1 for @remote_ids;
+                    for my $local_id (@local_ids)
+                    {
+                        # id exists in local
+                        $merged_ids{$local_id} = 1;
+                    }
+                    for my $remote_id (@remote_ids)
+                    {
+                        # id exists in remote
+                        $merged_ids{$remote_id} = 1;
+                    }
+                    for my $base_id (@base_ids)
+                    {
+                        $merged_ids{$base_id} = 1;
+                        if (not defined $local_ids{$base_id} or
+                            not defined $remote_ids{$base_id})
+                        {
+                            # id has been deleted in local or remote
+                            delete $merged_ids{$base_id};
+                        }
+                    }
+                    $merged_attr[$i] = '('. join(',', sort(keys %merged_ids)) .')';
+                }
+                else
+                {
+                    # attribute is not mergeable
+                    die "entity #$id attribute [$i] conflict! bailing out";
+                }
+            }
+            elsif ($base_attr[$i] ne $local_attr[$i])
+            {
+                # local only modified, or local and base both identically modified
+                $merged_attr[$i] = $local_attr[$i];
+            }
+            else
+            {
+                # remote only modified
+                $merged_attr[$i] = $remote_attr[$i];
+            }
+        }
+        $merged->{file}->{$id} = $base_class .'('. join(',', @merged_attr) .')';
     }
-    $merged->{file}->{$id} = $remote->{file}->{$id};
+    else
+    {
+        # entity is modified in remote only
+        $merged->{file}->{$id} = $remote->{file}->{$id};
+    }
 }
 
 # success
@@ -107,6 +174,13 @@ for my $id ($remote->modified_ids)
 $merged->write($ARGV[3]);
 
 0;
+
+sub _add_offset
+{
+    my ($id, $max, $offset) = @_;
+    return $id + $offset if $id > $max;
+    return $id;
+}
 
 package Ifc;
 
@@ -223,4 +297,35 @@ sub deleted_ids
 {
     my $self = shift;
     return sort {$a <=> $b} keys %{$self->{deleted}};
+}
+
+sub class_attributes
+{
+    my $self = shift;
+    my $id = shift;
+    my ($class, $attributes) = $self->{file}->{$id} =~ /^([_[:alnum:]]+)\((.*)\)$/;
+    my @attributes = _dissemble($attributes);
+    return $class, @attributes;
+}
+
+sub _dissemble
+{
+    my $text = shift;
+    my $NAME = '[_[:alnum:]]+';
+    my $SPACE = '[[:space:]]*';
+    my $COMMA = "[[:space:],]+";
+    my $QUOTED = "'.*?'";
+    my $SIMPLE = "[^',)(]+";
+    my $PARAMVALUE = "$NAME\\(.*?\\)";
+    my $PARAMQUOTED = "$NAME\\('.*?'\\)";
+    my $BRACKETED = "\\((?:$COMMA|$PARAMQUOTED|$PARAMVALUE|$QUOTED|$SIMPLE)*\\)";
+    my @tokens = $text =~ /($PARAMQUOTED|$PARAMVALUE|^\(.*\)$|$BRACKETED|$QUOTED|$SIMPLE)/xg;
+    my @out;
+    for my $token (@tokens)
+    {
+        $token =~ s/^$COMMA//x;
+        $token =~ s/$SPACE$//x;
+        push @out, $token;
+    }
+    return @out;
 }
