@@ -7,6 +7,7 @@ use DateTime::TimeZone;
 use 5.010;
 
 die "Usage: $0 base.ifc local.ifc remote.ifc merged.ifc" unless scalar(@ARGV) == 4;
+my @errors;
 
 my $base = Ifc->new;
 $base->load($ARGV[0]);
@@ -60,7 +61,7 @@ for my $id ($local->deleted_ids)
 {
     if (defined $remote->{modified}->{$id})
     {
-        die "local deleted entity #$id modified in remote! bailing out";
+        push @errors, "local deleted entity #$id modified in remote!";
     }
     else
     {
@@ -71,7 +72,7 @@ for my $id ($remote->deleted_ids)
 {
     if (defined $local->{modified}->{$id})
     {
-        die "remote deleted entity #$id modified in local! bailing out";
+        push @errors, "remote deleted entity #$id modified in local!";
     }
     else
     {
@@ -85,14 +86,14 @@ for my $id ($local->modified_ids)
 {
     my ($base_class, @base_attr) = $base->class_attributes($id);
     my ($local_class, @local_attr) = $local->class_attributes($id);
-    die "entity #$id class changed in local! bailing out" if ($base_class ne $local_class);
+    push @errors, "entity #$id class changed in local!" if ($base_class ne $local_class);
     $merged->{file}->{$id} = $local->{file}->{$id};
 }
 for my $id ($remote->modified_ids)
 {
     my ($base_class, @base_attr) = $base->class_attributes($id);
     my ($remote_class, @remote_attr) = $remote->class_attributes($id);
-    die "entity #$id class changed in remote! bailing out" if ($base_class ne $remote_class);
+    push @errors, "entity #$id class changed in remote!" if ($base_class ne $remote_class);
     if (defined $local->{modified}->{$id})
     {
         # entity is modified in both, try and merge attributes
@@ -146,7 +147,7 @@ for my $id ($remote->modified_ids)
                 else
                 {
                     # attribute is not mergeable
-                    die "entity #$id attribute [$i] conflict! bailing out";
+                    push @errors, "entity #$id attribute [$i] conflict!";
                 }
             }
             elsif ($base_attr[$i] ne $local_attr[$i])
@@ -168,6 +169,8 @@ for my $id ($remote->modified_ids)
         $merged->{file}->{$id} = $remote->{file}->{$id};
     }
 }
+
+die join "\n", @errors if scalar @errors;
 
 # success
 
