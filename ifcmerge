@@ -93,6 +93,7 @@ for my $id ($remote->deleted_ids)
 }
 
 # update modified entities
+# FIXME this will fail if the final entity has been deleted and a new entity created with the same id
 
 for my $id ($local->modified_ids)
 {

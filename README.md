@@ -30,26 +30,33 @@ Create a branch, edit and commit some changes to an IFC file:
 
     git branch my_branch
     git switch my_branch
+    [some editing of the IFC file]
     git commit test_model.ifc
 
 Switch back to the previous branch and try and merge the new branch:
 
     git switch main
+    [some editing of the IFC file]
+    git commit test_model.ifc
     git merge my_branch
 
 This will fail if there have been any conflicting changes in the meantime,
 configure git to use ifcmerge:
 
-     git config mergetool.ifcmerge.cmd '/home/bruno/src/ifcmerge/ifcmerge $BASE $LOCAL $REMOTE $MERGED'
+    git config mergetool.ifcmerge.cmd '/path/to/ifcmerge $BASE $LOCAL $REMOTE $MERGED'
 
 Try and resolve the conflict:
 
-     git mergetool --tool=ifcmerge
-     git commit -i test_model.ifc
+    git mergetool --tool=ifcmerge
+    git commit -i test_model.ifc
 
 You can always abandon the merge:
 
-     git merge --abort
+    git merge --abort
+
+If your repository only contains IFC files, you can set git to always use ifcmerge:
+
+    git config merge.tool ifcmerge
 
 ## About
 
