@@ -1,5 +1,17 @@
 #!/usr/bin/perl
 
+# Copyright (C) 2022 Bruno Postle <bruno@postle.net>
+#
+# ifcmerge is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ifcmerge is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
 use strict;
 use warnings;
 use DateTime;
@@ -148,7 +160,7 @@ for my $id ($remote->modified_ids)
                 {
                     # attribute is not mergeable
                     $merged_attr[$i] = $local_attr[$i];
-                    push @errors, "entity #$id attribute [". $i +1 ."] conflict!";
+                    push @errors, "entity #$id attribute [". ($i +1) ."] conflict!";
                 }
             }
             elsif ($base_attr[$i] ne $local_attr[$i])
@@ -171,7 +183,7 @@ for my $id ($remote->modified_ids)
     }
 }
 
-die join "\n", @errors if scalar @errors;
+die join "\n", @errors, '' if scalar @errors;
 
 # success
 
