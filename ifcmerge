@@ -148,7 +148,7 @@ for my $id ($remote->modified_ids)
                 {
                     # attribute is not mergeable
                     $merged_attr[$i] = $local_attr[$i];
-                    push @errors, "entity #$id attribute [$i] conflict!";
+                    push @errors, "entity #$id attribute [". $i +1 ."] conflict!";
                 }
             }
             elsif ($base_attr[$i] ne $local_attr[$i])
