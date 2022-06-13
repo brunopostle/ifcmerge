@@ -11,50 +11,52 @@ This tool requires that a *Native IFC* application is used for all authoring
 and editing.  A Native IFC application behaves in the following ways when
 editing a pre-existing file:
 
-* IFC entities *must* be written in the same format as received, in numeric
-  order and with the same numeric ids as before.
+* IFC entities *must* be written in the same format as received, with the same
+  numeric ids as before.
 
 * Attribute changes to entities *must* be written in-place.
 
 * Numeric ids of deleted entities *must not* be reused.
 
-* New entities *must* be appended to the end of the file.
-
 If you use a traditional BIM application that saves in a proprietary format,
-and that can import/export IFC files, you probably do not have a *Native IFC*
-application :(
+and that can then import/export IFC files, you probably do not have a *Native
+IFC* application :(
 
 ## Quickstart
+
+Configure git to use ifcmerge for the current repository:
+
+    git config mergetool.ifcmerge.cmd '/path/to/ifcmerge $BASE $LOCAL $REMOTE $MERGED'
 
 Create a branch, edit and commit some changes to an IFC file:
 
     git branch my_branch
     git switch my_branch
-    [some editing of the IFC file]
+      [some editing of the IFC file]
     git commit test_model.ifc
 
-Switch back to the previous branch and try and merge the new branch:
+Switch back to the previous branch and try to merge the new branch:
 
     git switch main
-    [some editing of the IFC file]
+      [some editing of the IFC file]
     git commit test_model.ifc
     git merge my_branch
 
-This will fail if there have been any conflicting changes in the meantime,
-configure git to use ifcmerge:
-
-    git config mergetool.ifcmerge.cmd '/path/to/ifcmerge $BASE $LOCAL $REMOTE $MERGED'
-
-Try and resolve the conflict:
+This will fail because there are *always* conflicts between two versions of the
+same IFC file.  Try and resolve the conflict using ifcmerge:
 
     git mergetool --tool=ifcmerge
+
+Commit the merge if it is successful:
+
     git commit -i test_model.ifc
 
 You can always abandon the merge:
 
     git merge --abort
 
-If your repository only contains IFC files, you can set git to always use ifcmerge:
+If your repository only contains IFC files, you can set git to always use
+ifcmerge when merging:
 
     git config merge.tool ifcmerge
 
