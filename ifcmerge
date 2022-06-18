@@ -155,6 +155,7 @@ for my $id ($remote->modified_ids)
                             delete $merged_ids{$base_id};
                         }
                     }
+                    # FIXME this should be a numeric sort
                     $merged_attr[$i] = '('. join(',', sort(keys %merged_ids)) .')';
                 }
                 else
