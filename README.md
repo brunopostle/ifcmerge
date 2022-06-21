@@ -26,6 +26,13 @@ application :(
 
 ## Quickstart
 
+Given a base IFC file and two different forked versions of it, combine the
+changes from the two forks into a merged result like so:
+
+    ifcmerge base.ifc local_fork.ifc remote_fork.ifc result_merged.ifc
+
+## Using ifcmerge with git
+
 Configure git to add *ifcmerge* to the list of available merge tools (set the
 path to suit your installation location):
 
