@@ -36,8 +36,8 @@ For example, spatial containers such as rooms and storeys are typically defined 
 This is basic information that would be expected by a Facilities Management team after building handover.
 
 Separating trades into silos that can't modify each other's data has other disadvantages:
-A Structural engineer can't provisionally move a door in the architect's model; they have to create a drawing showing how they think the door should move, send it in an email to the architect, hoping then that the architect might update their model at some point -- eventually this moved door will cascade into the federated model that everyone sees.
-Buildings are never constructed exactly as drawn; a responsible contractor will update a BIM model 'as-built', but these updates can't be fed-back upstream so that everybody has the same model, this would require import, update, export, import and export steps -- overwriting the upstream models in the process.
+A Structural engineer can't provisionally move a door in the architect's model; they have to create a drawing showing how they think the door should move, send it in an email to the architect, hoping then that the architect might update their model at some point - eventually this moved door will cascade into the federated model that everyone sees.
+Buildings are never constructed exactly as drawn; a responsible contractor will update a BIM model 'as-built', but these updates can't be fed-back upstream so that everybody has the same model, this would require import, update, export, import and export steps - overwriting the upstream models in the process.
 
 In contrast, the way we write and maintain software is not at all like the way buildings are designed with BIM.
 Many software projects have lots of contributors, often working on the same files at the same time, using systems that scale to thousands of developers.
@@ -54,33 +54,45 @@ This *Native IFC* workflow enables genuine interoperable distributed BIM collabo
 Rationale
 ---------
 
-We propose a new paradigm, creating and editing IFC data in-place without import/export translation to proprietary models, *Native IFC*.
+We propose a new paradigm, creating and editing IFC data in-place without import/export translation to proprietary models: *Native IFC*.
 
-We find that STEP/SPF ID change tracking allows robust three-way merging of IFC files.
+We note that *Native IFC* data in SPF (STEP Physical File) format is a good fit for storage in distributed Revision Control Systems such as *git* or *mercurial*.
+*Native IFC* changesets are small, limited to just the modified, deleted or added data - a small change to a huge file represents a few bytes of data.
+Git repositories contain full history, allowing design history to be reconstructed at any time.
+Git is an open standard, repositories can be local, or hosted online in 'forges', and transferred elsewhere without loss of history.
+A git database is compressed, so transferring an entire model with hundreds of changesets can involve less data than transferring a single uncompressed model.
+Git scales, in 2017 the entire Microsoft `Windows code base moved to git`_ into a single 300 GiB repository.
 
-The git revision control system is a good fit for collaborative BIM, enabling a modern branch, fork, pull-request and merge workflow.
-Git is both an offline and online technology, permitting asynchronous working.
-Git repositories contain full history, allowing all stages to be reconstructed at any time, only changes are stored and the database is compressed.
-Cloning a git repository with hundreds of individual commits is likely to involve less data than transferring a single uncompressed model.
-Git is an open standard, repositories can be hosted anywhere and transferred without loss to other forges, or stored locally.
-Git scales, in 2017 the entire Microsoft `Windows code base moved to git`_ in a single 300 GiB repository.
+We propose that multiple users should be able to work on BIM models asynchronously, updating using a three-way merge process.
+However for a modern branch, fork, pull-request and merge workflow, the standard three-way merge approach used for software sourcecode simply doesn't work for IFC files.
+This is because sourcecode is ordered by line, for each line of sourcecode the adjacent contextual lines are extremely relevant.
+SPF files are ordered by numeric ID, each entity may appear anywhere in the file, but the unique ID is the key to accessing the entity.
+We find that tracking of modified, deleted and added SPF IDs is sufficient to characterise the difference between two SPF files.
+Further, tracking SPF IDs allows robust three-way merging of *Native IFC* files, enabling the collaborative branching/merging workflow described above.
 
-We propose the use of single models in preference to existing federation practices.
-Filters in BIM applications allow large single models to be opened and edited, this allows the same features as a federated workflow while allowing container and other relationships, plus enabling cross-discipline contribution.
-Federated models are still possible if required, git supports third-party repositories included as 'submodules'.
+This ability for multiple users to edit the same IFC files asynchronously changes the need for federated files within collaborative design projects.
+Federation (splitting projects up into multiple files) still has its uses, for example survey scans are used entirely for reference, so there is no advantage to includind such data in a design model, and considerable disadvantage.
+Federated design models are still possible if required, indeed git supports third-party repositories included as 'submodules', this way ownership may be distributed in much the same way as before.
 
-Native IFC is easy to compare, viewing changes between arbitrary commits and versions is a basic requirement.
+Large single IFC files may cause problems, not because of network or storage issues, since only changes need to be transmitted, but because applications may not be able to open the entire file at once.
+*Native IFC* tools such as BlenderBIM allow 'filtered' opening of IFC files, so a user may choose to only load a subset of the model geometry in the GUI for editing, extending this subset as necessary when access is required for viewing and editing.
+We envisage that this 'filtering', and further enhancements of it will be required to work with very large IFC models.
 
-Git forges have advanced bug/issue tracking and repository management. These features provide a complete replacement CDE (common data environment)
+`Git-forge services`_ typically have advanced issue tracking, discussion, repository management and automation via continuous integration.
+These features potentially provide a complete replacement CDE (common data environment).
+These Services can be self-hosted using Open Source forges such as Gitea.
+Commercial services such as Github offer guaranteed availability, advanced user management and access control for millions of existing users and organisations.
 
-Generation of documentation, 2D drawings, schedules etc.. from IFC models can be automated using continuous integration tools triggered by git 'commit hooks'.
-Continuous integration allows problems and status changes to be tracked and reported automatically.
+Continuous integration triggered by git 'commit hooks' allows problems and status changes to be tracked and reported automatically.
+Generation of documentation, 2D drawings, schedules etc.. from IFC models can potentially be automated and regenerated automatically for each tagged-release.
 In the future, costings, carbon analysis, thermal, structural analysis, any number of other checks can all be performed for *every commit* - giving short feedback cycles needed when designing complex systems.
 
-A basic feature of *Native IFC* is that as long as simple rules are followed, multiple tools from multiple vendors can work on the same IFC data without conflict.
+*Native IFC* is easy to compare, we envisage that web-viewers will soon be able to browse changes between arbitrary git revisions, previewing pull-requests and allowing project stakeholders access to the latest official BIM model, or even to watch work in progress.
 
 Specification
 -------------
+
+A basic feature of *Native IFC* is that as long as simple rules are followed, multiple tools from multiple vendors can work on the same IFC data without conflict.
 
 Technical requirements
 ~~~~~~~~~~~~~~~~~~~~~~
