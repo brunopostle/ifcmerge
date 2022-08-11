@@ -1,48 +1,55 @@
 Native IFC
 ==========
 
-*A white-paper introducing a fully collaborative BIM using open standards and open protocols*
+*A white-paper introducing a collaborative BIM using open standards and open protocols*
+
+[Note: this document is a work-in-progress, comments and contributions welcome]
 
 Abstract
 --------
 
-A simple to implement set of protocols for reading and writing BIM data, known as Native IFC, enables robust multi-user collaborative BIM workflows.
+A simple to implement set of protocols for reading and writing BIM data, known as *Native IFC*, enables robust multi-user collaborative BIM workflows.
 We show how full version tracking, rollback, attribution, staging, merging, multi-user editing, issue tracking, automated checking, and publishing can be achieved by hosting IFC data in established commercial and open source git-forge services.
 We show that the git revision control system as a Common Data Environment (CDE) for BIM data is scalable, secure, future-proof and fully interoperable with existing systems. 
-We show multiple software applications and libraries that already implement Native IFC, this is a real-world technology that can be adopted today.
+We show multiple software applications and libraries that already implement *Native IFC*, this is a real-world technology.
 
 Motivation
 ----------
 
-Building Information Modelling (BIM) is a process of modelling entire buildings as things, information, and the relationships between these.
+Building Information Modelling (BIM) is a process of modelling entire buildings as things, information, and the relationships between them.
 
-BIM is generally done with huge software applications that keep their data in proprietary format files.
+BIM is generally done with large software applications that keep their data in proprietary format files.
 These are shared in what is called a Common Data Environment (CDE), effectively a file server that can be accessed remotely.
 
-This way of doing Collaborative BIM has lots of disadvantages, one of them is that such a system can't be called interoperable without exporting data to open formats like `Industry Foundation Classes (IFC)`_ and sharing these exported files, another is it isn't practical for multiple people to contribute to the same model without problematic workarounds. 
-These workarounds amount to dividing the model up, and authorising write access to these parts one user at a time.
-Typically, the division would be between trades with the architectural part providing overall coordination.
-This division of labour is termed 'Worksharing', or more generally 'federation' where each trade has a separate file.
+This way of doing Collaborative BIM has disadvantages: one of them is that such a system can't be called interoperable without exporting data to open formats such as `Industry Foundation Classes (IFC)`_ and sharing these exported files; this in turn means that it isn't practical for multiple people to contribute to the same model without problematic workarounds.
 
-Federation, with projects split into separate files by trade has some disadvantages.
-A notable problem is that one of the main selling-points of BIM is that it is not just objects and information, but relationships between this data.
+A system where data is exported from one application and imported into another is a one-way street.
+Round-tripping through import/export necessarily involves data loss, design teams therefore construct workflows so that round-tripping never happens.
+Where multiple trades and consultants are involved in a project, typically each will be given strictly delimited parts of the project to work-on, making their parts available to the rest of the team as a read-only reference.
+This division of labour is termed 'federation', where each trade owns a separate file, usually with the architectural part providing overall coordination
+(A proprietary form of this, worksharing, allows this division of labour to occur within a single file, but it requires that all users are using the same proprietary application).
+
+Federation, with projects split into separate files by trade, has a notable disadvantage:
+A selling-point of BIM is that it is not just objects and information, but relationships between this data.
 With a federated model it isn't possible to define a relationship between elements that exist in separate files.
 For example, spatial containers such as rooms and storeys are typically defined in an architectural model, a federated building services model can't assign equipment to these spaces as a result.
+This is basic information that would be expected by a Facilities Management team after building handover.
 
-In contrast, the way we write and maintain software isn't like the way buildings are designed with BIM.
+Separating trades into silos that can't modify each other's data has other disadvantages:
+A Structural engineer can't provisionally move a door in the architect's model; they have to create a drawing showing how they think the door should move, send it in an email to the architect, hoping then that the architect might update their model at some point -- eventually this moved door will cascade into the federated model that everyone sees.
+Buildings are never constructed exactly as drawn; a responsible contractor will update a BIM model 'as-built', but these updates can't be fed-back upstream so that everybody has the same model, this would require import, update, export, import and export steps -- overwriting the upstream models in the process.
+
+In contrast, the way we write and maintain software is not at all like the way buildings are designed with BIM.
 Many software projects have lots of contributors, often working on the same files at the same time, using systems that scale to thousands of developers.
 
 Software development has settled on a few collaborative practices and tools: we store our files in distributed systems like the `git version control system`_, and we work by 'forking' a copy, making local changes, then requesting that others 'pull' our changes, merging them with their own.
 
-Collaborative software development wouldn't be possible without a specific technology: the three-way merge.
+This collaborative software development wouldn't be possible without a specific technology: the *three-way merge*.
 A 'three-way merge' allows two people to make independent changes to the same file, then merge them together using the common 'ancestor' as a base reference.
 
 We assert that what the AEC community needs is the equivalent of a 'three-way merge' for BIM data.
-This would enable genuine collaboration, reusing tools long available in the software world: `git-forge services`_ such as GitHub, trackers, discussion, tagging, releases and continuous integration.
-
-Any interoperable BIM workflow is necessarily going to be based on the IFC standard, as there are no credible alternatives.
-IFC is often mistakenly presented as a BIM version of PDF, this view is not justified by the IFC specification which clearly has features suitable for a live editable format.
-We find that editing IFC data directly is straightforward and offers many benefits.
+Consequently, this whitepaper introduces a working three-way merge tool for *Native IFC* data.
+This *Native IFC* workflow enables genuine interoperable distributed BIM collaboration, reusing tools long available in the software world: `git-forge services`_ such as GitHub, trackers, discussion, tagging, releases and continuous integration.
 
 Rationale
 ---------
