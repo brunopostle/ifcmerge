@@ -132,25 +132,25 @@ There are some unfortunate exceptions to this, like materials and profiles which
 Description of an IFC three-way merge tool
 ------------------------------------------
 
-`ifcmerge`_ is a reference implementation of a three-way merge tool for IFC/SPF data.
 A three-way merge tool requires a *base* file, a common-ancestor of the changed *local* and *remote* files.
-The `git merge` process automatically finds the nearest common-ancestor.
+The `git merge` command automatically finds this nearest *base* common-ancestor in the git repository, so you don't have to.
 
 Merging analysis determines which STEP IDs have been modified, deleted or added between the *base* and the *local*, the same process is performed for differences between the *base* and *remote*.
 
-If entities have been added to both the *local* and *remote* files, the locally added entities and any references to them are renumbered/incremented such that there areno duplicate IDs.
-Added entities can then be merged into the *base*.
+If entities have been added to both the *local* and *remote* files, the locally added entities and any references to them are renumbered/incremented such that there are no duplicate IDs.
+Added entities can then be merged into the *base* without conflict.
 
 Deleted entities from either branch are removed from the *base*.
 However entities that are deleted in one branch and modified in the other will cause the merge to be abandoned, this will need to be resolved manually before trying again.
 
 Merges of software source code will fail badly if the same entity/line has been modified in both branches.
-However, STEP entities are structured, with fixed numbering and ordering of attributes, so if different attributes have been modified in each branch, both changes can be transferred to the merged output.
+However, STEP entities are structured, with fixed count and ordering of attributes, so if different attributes have been modified in each branch, both changes can be transferred to the merged output.
 This allows, for example, the Name and Representation of a Wall to be modified in respective branches without conflict.
-Further, some entity attributes are just lists of STEP IDs; additions and deletions to these lists can also be merged.
+Further, many entity attributes are just lists of STEP IDs; additions and deletions to these lists can also be merged.
 This allows, for example, elements to be added to a Spatial zone or Aggregate in both branches.
 
-As you can see, *Native IFC* files are considerably better suited to this three-way merge process than software source-code.
+This is a short description, but hopefully it illustrates that *Native IFC* files are considerably better suited to this three-way merge process than software source-code.
+For further details, please refer to `ifcmerge`_, a reference implementation of a three-way merge tool for IFC/SPF data.
 
 Illustration of IFC three-way merging
 -------------------------------------
