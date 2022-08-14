@@ -36,8 +36,8 @@ For example, spatial containers such as rooms and storeys are typically defined 
 This is basic information that would be expected by a Facilities Management team after building handover.
 
 Separating trades into silos that can't modify each other's data has other disadvantages:
-A Structural engineer can't provisionally move a door in the architect's model; they have to create a drawing showing how they think the door should move, send it in an email to the architect, hoping then that the architect might update their model at some point - eventually this moved door will cascade into the federated model that everyone sees.
-In a real-life construction project, buildings are never built exactly as-drawn; a responsible contractor will update a BIM model 'as-built', but these updates can't be fed-back upstream so that everybody has the same model, this would require import, update, export, import and export steps - overwriting the upstream models in the process.
+A structural engineer can't provisionally move a door in the architect's model; they have to create a drawing showing how they think the door should move, send it in an email to the architect, hoping then that the architect might update their model at some point - eventually this moved door will cascade into the federated model that everyone sees.
+Another example, in a real-life construction project, buildings are never built exactly as-drawn; a responsible contractor will update a BIM model 'as-built', but these updates can't be fed-back upstream so that everybody has the same model, this would require import, update, export, import and export steps - overwriting the upstream models in the process.
 
 In contrast, the way we write and maintain software is not at all like the way buildings are designed and managed with BIM.
 Many software projects have lots of contributors, often working on the same files at the same time, using systems that scale to thousands of developers.
@@ -61,7 +61,7 @@ We note that *Native IFC* data in SPF (STEP Physical File) format is a good fit 
 Git repositories contain full history, allowing design history to be reconstructed at any time.
 Git is an open standard, repositories can be local, or hosted online in 'forges', and transferred elsewhere without loss of history.
 A git database is compressed, so transferring an entire model with hundreds of changesets can involve less data than transferring a single uncompressed model.
-Git scales, in 2017 the entire Microsoft `Windows code base moved to git`_ into a single 300 GiB repository.
+Git scales, in 2017 the entire Microsoft `Windows code base moved to git`_ into a single 300 GigaByte repository.
 
 We propose that multiple users should be able to work on BIM models asynchronously, updating using a three-way merge process.
 However for a modern branch, fork, pull-request and merge workflow, the standard three-way merge approach used for software sourcecode simply doesn't work for IFC files.
@@ -71,7 +71,7 @@ We find that tracking of modified, deleted and added SPF IDs is sufficient to ch
 Further, tracking SPF IDs allows robust three-way merging of *Native IFC* files, enabling the collaborative branching/merging workflow described above.
 
 This ability for multiple users to edit the same IFC files asynchronously changes the need for federated files within collaborative design projects.
-Federation (splitting projects up into multiple files) still has its uses, for example survey scans are used entirely for reference, so there is no advantage to includind such data in a design model, and considerable disadvantage.
+Federation (splitting projects up into multiple files) still has its uses, for example survey scans are used entirely for reference, so there is no advantage to including such data in a design model, and considerable disadvantage.
 Federated design models are still possible if required, indeed git supports third-party repositories included as 'submodules', this way ownership may be distributed in much the same way as before.
 
 Large single IFC files may cause problems, not because of network or storage issues, since only changes need to be transmitted, but because applications may not be able to open the entire file at once.
@@ -232,6 +232,10 @@ Any *Native IFC* tool will preserve the data in these extensions automatically, 
 By rewriting entity IDs, the three-way merge process 'squashes' commits, obscuring any fine-grain distinction between them.
 So any staging process, with multiple levels of approval involving pull-requests, will associate all changes with the most recent approver - these approvers will be responsible for including relevant authorship information in commit messages. 
 
+Git forges have extensive issue tracking with easy to use discussion of pull requests, problems and general queries.
+Although git repositories of data are easy to move and replicate, this forking behaviour being of course fundamental to the branch and merge workflow, these discussions are not so straightforward to move, potentially being lost at the end of a project.
+This may not be a problem for particular projects, and currently git forges offer indefinite archiving, but to be certain that this communication is not lost, a self-hosted git forge such as `gitea`_ may be preferred.
+
 Rejected Ideas
 --------------
 
@@ -266,3 +270,5 @@ Copyright 2022, Bruno Postle with additional text by Dion Moult. The latest vers
 .. _File::IFC: https://bitbucket.org/brunopostle/file-ifc
 
 .. _ifcmerge: https://github.com/brunopostle/ifcmerge
+
+.. _gitea: https://gitea.io/
