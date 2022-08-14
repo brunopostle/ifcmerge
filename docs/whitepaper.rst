@@ -223,6 +223,15 @@ Limitations
 Although there are fully functional *Native IFC* tools that cover much of the requirements of the AEC industry, and an advantage of Native IFC is that multiple tools can be used simultaneously without conflict, GUI tools like `BlenderBIM`_ and `IFC.js`_ are currently under rapid development.
 As a result, support for some AEC related tasks is mature, partial or missing entirely.
 
+IFC is a low-level language with extensive functionality to describe how buildings are constructed, what they are made from, and how they work.
+IFC doesn't generally describe *design intent* or *parametric behaviour*.
+The typical solution to this to attach additional metadata to elements and aggregates of elements indicate how they may be recreated in a high-level process.
+These extensions to the standard may be shared between applications or specific to a particular tool.
+Any *Native IFC* tool will preserve the data in these extensions automatically, though without coordination it may become out of sync when objects are edited.
+
+By rewriting entity IDs, the three-way merge process 'squashes' commits, obscuring any fine-grain distinction between them.
+So any staging process, with multiple levels of approval involving pull-requests, will associate all changes with the most recent approver - these approvers will be responsible for including relevant authorship information in commit messages. 
+
 Rejected Ideas
 --------------
 
