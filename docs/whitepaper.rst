@@ -29,14 +29,8 @@ Where multiple trades and consultants are involved in a project, typically each 
 This division of labour is termed 'federation', where each trade owns a separate file, usually with the architectural part providing overall coordination
 (A proprietary form of this, 'worksharing', allows this division of labour to occur within a single file, but it requires that all users are using the same proprietary application and file format).
 
-Federation, with projects split into separate files by trade, has a notable disadvantage:
-A selling-point of BIM is that it is not just objects and information, but relationships between this data.
-With a federated model it isn't possible to define a relationship between elements that exist in separate files.
-For example, spatial containers such as rooms and storeys are typically defined in an architectural model, a federated building services model can't assign equipment to these spaces as a result.
-This is basic information that would be expected by a Facilities Management team after building handover.
-
 Separating trades into silos that can't modify each other's data has other disadvantages:
-A structural engineer can't provisionally move a door in the architect's model; they have to create a drawing showing how they think the door should move, send it in an email to the architect, hoping then that the architect might update their model at some point - eventually this moved door will cascade into the federated model that everyone sees.
+A structural engineer can't provisionally move a door in the architect's model; they have to create a sketch showing how they think the door should move, send it in an email to the architect, hoping then that the architect might update their model at some point - eventually this moved door will cascade into the federated model that everyone sees.
 Another example, in a real-life construction project, buildings are never built exactly as-drawn; a responsible contractor will update a BIM model 'as-built', but these updates can't be fed-back upstream so that everybody has the same model, this would require import, update, export, import and export steps - overwriting the upstream models in the process.
 
 In contrast, the way we write and maintain software is not at all like the way buildings are designed and managed with BIM.
@@ -60,7 +54,6 @@ We note that *Native IFC* data in SPF (STEP Physical File) format is a good fit 
 *Native IFC* changesets are small, limited to just the modified, deleted or added data - a small change to a huge file represents a few bytes of data.
 Git repositories contain full history, allowing design history to be reconstructed at any time.
 Git is an open standard, repositories can be local, or hosted online in 'forges', and transferred elsewhere without loss of history.
-A git database is compressed, so transferring an entire model with hundreds of changesets can involve less data than transferring a single uncompressed model.
 Git scales, in 2017 the entire Microsoft `Windows code base moved to git`_ into a single 300 GigaByte repository.
 
 We propose that multiple users should be able to work on BIM models asynchronously, updating using a three-way merge process.
@@ -70,18 +63,19 @@ SPF files are ordered by numeric ID, each entity may appear anywhere in the file
 We find that tracking of modified, deleted and added SPF IDs is sufficient to characterise the difference between two SPF files.
 Further, tracking SPF IDs allows robust three-way merging of *Native IFC* files, enabling the collaborative branching/merging workflow described above.
 
-This ability for multiple users to edit the same IFC files asynchronously changes the need for federated files within collaborative design projects.
-Federation (splitting projects up into multiple files) still has its uses, for example survey scans are used entirely for reference, so there is no advantage to including such data in a design model, and considerable disadvantage.
-Federated design models are still possible if required, indeed git supports third-party repositories included as 'submodules', this way ownership may be distributed in much the same way as before.
+This ability for multiple users to edit the same Native IFC file asynchronously changes the need for federated files within collaborative design projects.
+Computer resources constrain the maximum practical size of individual IFC files, these constraints will determine the number of files required in a federated BIM model consisting of Native IFC files.
+In a small project it is possible, *though not necessarily desirable*, for all stakeholders to work with a single Native IFC file.
 
-Large single IFC files may cause problems, not because of network or storage issues, since only changes need to be transmitted, but because applications may not be able to open the entire file at once.
-*Native IFC* tools such as BlenderBIM allow 'filtered' opening of IFC files, so a user may choose to only load a subset of the model geometry in the GUI for editing, extending this subset as necessary when access is required for viewing and editing.
-We envisage that this 'filtering', and further enhancements of it will be required to work with very large IFC models.
+BIM is not just objects and information, but relationships between this data.
+With a federated model, defining a relationship between elements that exist in separate files is not straightforward.
+For example, spatial containers such as rooms and storeys are typically defined in an architectural model, a federated building services model can't assign equipment to these spaces as a result.
+Native IFC offers solutions to these sorts of problems by putting data where it is needed rather than where software constraints require it to be put.
 
 `Git-forge services`_ typically have advanced issue tracking, discussion, repository management and automation via continuous integration.
 These features potentially provide a complete replacement CDE (common data environment).
-These Services can be self-hosted using Open Source forges such as Gitea.
-Commercial services such as Github offer guaranteed availability, advanced user management and access control for millions of existing users and organisations.
+These Services can be self-hosted using Open Source forges such as `Gitea`_.
+Commercial services such as `Github`_ offer guaranteed availability, advanced user management and access control for millions of existing users and organisations.
 
 Continuous integration triggered by 'commit hooks' allows problems and status changes to be tracked and reported automatically.
 Generation of documentation, 2D drawings, schedules etc.. from IFC models can potentially be automated and regenerated automatically for each tagged-release.
@@ -229,12 +223,18 @@ The typical solution to this to attach additional metadata to elements and aggre
 These extensions to the standard may be shared between applications or specific to a particular tool.
 Any *Native IFC* tool will preserve the data in these extensions automatically, though without coordination it may become out of sync when objects are edited.
 
+BIM projects are limited by the difficulty of handling large unwieldy files.
+Federation (splitting projects up into multiple files) will always be necessary to deal with these limitations, but also survey scans and other received information is used entirely for reference, so there is no advantage to including such data in a design model, and considerable disadvantage.
+Federation can be supported either as multiple files in a single repository, or using third-party repositories included as 'submodules', this way ownership may be distributed in a variety of ways as necessary to suit specific project needs.
+*Native IFC* tools such as BlenderBIM allow 'filtered' opening of IFC files, so a user may choose to only load a subset of the model geometry in the GUI for editing, extending this subset as necessary when access is required for viewing and editing.
+We envisage that this 'filtering', and further enhancements of it in combination with a federated approach will be required to work with very large BIM projects.
+
 By rewriting entity IDs, the three-way merge process 'squashes' commits, obscuring any fine-grain distinction between them.
 So any staging process, with multiple levels of approval involving pull-requests, will associate all changes with the most recent approver - these approvers will be responsible for including relevant authorship information in commit messages. 
 
 Git forges have extensive issue tracking with easy to use discussion of pull requests, problems and general queries.
 Although git repositories of data are easy to move and replicate, this forking behaviour being of course fundamental to the branch and merge workflow, these discussions are not so straightforward to move, potentially being lost at the end of a project.
-This may not be a problem for particular projects, and currently git forges offer indefinite archiving, but to be certain that this communication is not lost, a self-hosted git forge such as `gitea`_ may be preferred.
+This may not be a problem for particular projects, and currently git forges offer indefinite archiving, but to be certain that this communication is not lost, a self-hosted git forge such as `Gitea`_ may be preferred.
 
 Rejected Ideas
 --------------
@@ -271,4 +271,6 @@ Copyright 2022, Bruno Postle with additional text by Dion Moult. The latest vers
 
 .. _ifcmerge: https://github.com/brunopostle/ifcmerge
 
-.. _gitea: https://gitea.io/
+.. _Gitea: https://gitea.io/
+
+.. _Github: https://github.com/
