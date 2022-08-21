@@ -29,7 +29,10 @@ Where multiple trades and consultants are involved in a project, typically each 
 This division of labour is termed 'federation', where each trade owns a separate file, usually with the architectural part providing overall coordination
 (A proprietary form of this, 'worksharing', allows this division of labour to occur within a single file, but it requires that all users are using the same proprietary application and file format).
 
-Separating trades into silos that can't modify each other's data has other disadvantages:
+Dividing work into fragments that can each only be edited by one person at a time creates bottlenecks.
+In this situation, an architect can't work on the ground floor of a building while their colleague sat next to them works on the roof.
+
+Separating trades into silos that can't modify each other's data has further disadvantages:
 A structural engineer can't provisionally move a door in the architect's model; they have to create a sketch showing how they think the door should move, send it in an email to the architect, hoping then that the architect might update their model at some point - eventually this moved door will cascade into the federated model that everyone sees.
 Another example, in a real-life construction project, buildings are never built exactly as-drawn; a responsible contractor will update a BIM model 'as-built', but these updates can't be fed-back upstream so that everybody has the same model, this would require import, update, export, import and export steps - overwriting the upstream models in the process.
 
@@ -52,7 +55,7 @@ We propose a new paradigm, creating and editing IFC data in-place without import
 
 We note that *Native IFC* data in SPF (STEP Physical File) format is a good fit for storage in distributed Revision Control Systems such as *git* or *mercurial*.
 *Native IFC* changesets are small, limited to just the modified, deleted or added data - a small change to a huge file represents a few bytes of data.
-Git repositories contain full history, allowing design history to be reconstructed at any time.
+Git repositories contain full history, allowing design development to be reconstructed at any time.
 Git is an open standard, repositories can be local, or hosted online in 'forges', and transferred elsewhere without loss of history.
 Git scales, in 2017 the entire Microsoft `Windows code base moved to git`_ into a single 300 GigaByte repository.
 
@@ -63,14 +66,14 @@ SPF files are ordered by numeric ID, each entity may appear anywhere in the file
 We find that tracking of modified, deleted and added SPF IDs is sufficient to characterise the difference between two SPF files.
 Further, tracking SPF IDs allows robust three-way merging of *Native IFC* files, enabling the collaborative branching/merging workflow described above.
 
-This ability for multiple users to edit the same Native IFC file asynchronously changes the need for federated files within collaborative design projects.
-Computer resources constrain the maximum practical size of individual IFC files, these constraints will determine the number of files required in a federated BIM model consisting of Native IFC files.
-In a small project it is possible, *though not necessarily desirable*, for all stakeholders to work with a single Native IFC file.
+This ability for multiple users to edit the same *Native IFC* file asynchronously changes the basic rationale for federated files within collaborative design projects.
+Computer resources constrain the maximum practical size of individual IFC files, this constraint will primarily determine the number of files required in a federated BIM model consisting of *Native IFC* files.
+In a small construction project it is possible, though not necessarily desirable, for all project stakeholders to work with a single *Native IFC* file.
 
 BIM is not just objects and information, but relationships between this data.
 With a federated model, defining a relationship between elements that exist in separate files is not straightforward.
 For example, spatial containers such as rooms and storeys are typically defined in an architectural model, a federated building services model can't assign equipment to these spaces as a result.
-Native IFC offers solutions to these sorts of problems by putting data where it is needed rather than where software constraints require it to be put.
+*Native IFC* offers solutions to these sorts of problems by putting data where it is needed rather than where software constraints require it to be put.
 
 `Git-forge services`_ typically have advanced issue tracking, discussion, repository management and automation via continuous integration.
 These features potentially provide a complete replacement CDE (common data environment).
@@ -119,7 +122,7 @@ However, there are some things that are ambiguous, like brep/tessellation shape 
 Though parametric extrusions and similar can be edited in-place, so they should.
 
 Data is exposed through an application UI starting at rooted IFC entities.
-The concept is that unless the Native IFC tool is some developer poweruser thing, the user should always be presented clearly with rooted entities as a starting point, which then access the auxiliary data.
+The concept is that unless the *Native IFC* tool is some developer poweruser thing, the user should always be presented clearly with rooted entities as a starting point, which then access the auxiliary data.
 This allows some level of sanity of exchanging data with the ability to think in terms of rooted entities.
 There are some unfortunate exceptions to this, like materials and profiles which are critical to many disciplines but not given first class IFC status in the existing specification.
 
@@ -127,7 +130,7 @@ Description of an IFC three-way merge tool
 ------------------------------------------
 
 A three-way merge tool requires a *base* file, a common-ancestor of the changed *local* and *remote* files.
-The `git merge` command automatically finds this nearest *base* common-ancestor in the git repository, so you don't have to.
+The ``git merge`` command automatically finds this nearest *base* common-ancestor in the git repository, so you don't have to.
 
 Merging analysis determines which STEP IDs have been modified, deleted or added between the *base* and the *local*, the same process is performed for differences between the *base* and *remote*.
 
@@ -146,21 +149,14 @@ This allows, for example, elements to be added to a Spatial zone or Aggregate in
 This is a short description, but hopefully it illustrates that *Native IFC* files are considerably better suited to this three-way merge process than software source-code.
 For further details, please refer to `ifcmerge`_, a reference implementation of a three-way merge tool for IFC/SPF data.
 
-Illustration of IFC three-way merging
--------------------------------------
-
-The following sequences show resolution of situations where the same entity has been edited in both branches, merging of data manipulated by different applications, and scalability with large files.
-
-TODO
-
 Backwards compatibility
 -----------------------
 
-Although Native IFC expects applications to take the steps described above to ensure file continuity, the files themselves are entirely normal standards-compliant IFC STEP files, which can still be imported by legacy applications.
+Although *Native IFC* expects applications to take the steps described above to ensure file continuity, the files themselves are entirely normal standards-compliant IFC STEP files, which can still be imported by legacy applications.
 
-A file maintained under Native IFC protocols can even be used within a legacy federated BIM collaboration setup, either as a read-only overlay imported into legacy tools, or using files exported by legacy tools as federated overlays. Such arrangements may last for the duration of multi-year construction projects without incurring additional administration costs.
+A file maintained under *Native IFC* protocols can even be used within a legacy federated BIM collaboration setup, either as a read-only overlay imported into legacy tools, or using files exported by legacy tools as federated overlays. Such arrangements may last for the duration of multi-year construction projects without incurring additional administration costs.
 
-Native IFC files are fully interoperable in any such `openBIM`_ scenario.
+*Native IFC* files are fully interoperable in any such `openBIM`_ scenario.
 
 Security implications
 ---------------------
@@ -173,7 +169,7 @@ Confidentiality
 There is a distinction between normal expectations of privacy of occupants and designers, and potential criminal attacks on the building itself using privileged information.
 Most git-forge services allow fine-grained access control, including requiring multi-factor authentication for read-only access, so confidentiality is eminently achievable if required.
 Git allows commits to be 'squashed' together before sharing, so evidence of wasted effort, corrected mistakes or weekend working does not have to shared with the rest of the design team.
-We believe that the threat of burglary or terrorism from access to BIM data is overblown, these are 'movie-plot threats', real buildings are just not that different from each other.
+We believe that the threat of burglary or terrorism from access to BIM data is overblown, these are 'movie-plot threats' that are only relevant in specialist contexts, ordinary buildings are just not that different from each other.
 An analogy that can be drawn from software is that publically available and auditable software is generally considered positive for security.
 
 Intellectual property
@@ -186,18 +182,18 @@ A consideration is that there are advantages to allowing wider access to BIM mod
 an active citizen may be entitled to examine publicly funded construction projects in detail;
 sharing best-practice can improve the general quality of construction;
 an unauthenticated public URL that links directly to a view of a model using `BIM Collaboration Format (BCF)`_ would greatly aid communication between stakeholders;
-and, as with Open Source software, there are real benefits to liberal 'copyleft' licenses that allow reuse of design work. 
+and, as with Open Source software, there are untapped benefits to adopting 'copyleft' licenses that allow reuse of design work. 
 
 Auditing
 ~~~~~~~~
 
-With git as a version control system, all changes to a model can be traced precisely to author and date committed, either by trusting the git-forge authentication system or through PGP or S/MIME signing of commits.
+With git as a version control system, all changes to a model can be traced precisely to author and date committed, either by trusting the git-forge authentication system, or in extreme cases by adopting PGP or S/MIME signing of commits.
 
 Reference Implementations
 -------------------------
 
-Native IFC is not an onerous standard.
-From a software developers viewpoint, Native IFC is a rational design and implementation choice.
+*Native IFC* is not an onerous standard.
+From a software developers viewpoint, *Native IFC* is a rational design and implementation choice.
 So we have identified independently developed tools written in languages as diverse as C++/Python, Javascript and Perl that implement the standard without requiring any further modification.
 i.e. these tools already implement *Native IFC* by default:
 
@@ -207,14 +203,12 @@ i.e. these tools already implement *Native IFC* by default:
 
 `IFC.js`_, Javascript. Work in progress library and web GUI.
 
-`File::IFC`_, Perl. Legacy stable library for reading and writing IFC.
-
-`ifcmerge`_, Perl. Proof of concept three-way merge of Native IFC files.
+`File::IFC`_, Perl. Legacy stable library for reading and writing IFC/SPF data.
 
 Limitations
 -----------
 
-Although there are fully functional *Native IFC* tools that cover much of the requirements of the AEC industry, and an advantage of Native IFC is that multiple tools can be used simultaneously without conflict, GUI tools like `BlenderBIM`_ and `IFC.js`_ are currently under rapid development.
+Although there are fully functional *Native IFC* tools that cover much of the requirements of the AEC industry, and an advantage of *Native IFC* is that multiple tools can be used simultaneously without conflict, GUI tools like `BlenderBIM`_ and `IFC.js`_ are currently under rapid development.
 As a result, support for some AEC related tasks is mature, partial or missing entirely.
 
 IFC is a low-level language with extensive functionality to describe how buildings are constructed, what they are made from, and how they work.
@@ -224,7 +218,8 @@ These extensions to the standard may be shared between applications or specific 
 Any *Native IFC* tool will preserve the data in these extensions automatically, though without coordination it may become out of sync when objects are edited.
 
 BIM projects are limited by the difficulty of handling large unwieldy files.
-Federation (splitting projects up into multiple files) will always be necessary to deal with these limitations, but also survey scans and other received information is used entirely for reference, so there is no advantage to including such data in a design model, and considerable disadvantage.
+Federation (splitting projects up into multiple files) will always be necessary to deal with these limitations.
+Survey scans and other received information is used entirely for reference, so there is no advantage to including such data in a design model, and considerable disadvantage.
 Federation can be supported either as multiple files in a single repository, or using third-party repositories included as 'submodules', this way ownership may be distributed in a variety of ways as necessary to suit specific project needs.
 *Native IFC* tools such as BlenderBIM allow 'filtered' opening of IFC files, so a user may choose to only load a subset of the model geometry in the GUI for editing, extending this subset as necessary when access is required for viewing and editing.
 We envisage that this 'filtering', and further enhancements of it in combination with a federated approach will be required to work with very large BIM projects.
@@ -243,6 +238,53 @@ Often offered as a solution is storing IFC data for a project in a single online
 This would allow synchronous access, preventing conflict through short-term and local-scope locking mechanisms.
 We are not proposing this as a solution as it introduces a single point of failure.
 A git based workflow is distributed and robust against network failure, gracefully falling-back to simple distribution methods such as email during network instability or server failure.
+
+Illustration of IFC three-way merging
+-------------------------------------
+
+The following sequences show the resolution of situations where the same entity has been edited in both branches, merging of data manipulated by different applications, and scalability with large files.
+
+Overlapping edits
+~~~~~~~~~~~~~~~~~
+
+.. figure:: 20220821_105636.jpg
+   :scale: 100 %
+   :alt: A simple one room building
+
+   This is a *Native IFC* model of a simple building we are going to edit collaboratively.
+   It is created in Blenderbim, but it could be any IFC file.
+
+.. figure:: 20220821_105643.jpg
+   :scale: 100 %
+   :alt: The simple one room building with a moved window, additions, and colour changes
+
+   This is the same model with some changes made in Blenderbim, a *Native IFC* editor.
+   A window has been moved, the wall material has changed, and some decorative finials have been added to the roof storey.
+
+.. figure:: 20220821_105652.jpg
+   :scale: 100 %
+   :alt: The original simple one room building with the wall and roof height increased
+
+   In parallel, in another branch, some different changes are made to the original model.
+   The roof storey has been raised and the wall heights increased to match.
+   At this point, we have two 'forks' of the design, both manipulating the same building elements.
+
+.. figure:: 20220821_105705.jpg
+   :scale: 100 %
+   :alt: A merged model with chnages from both branches represented
+
+   With a three-way merge, using the comon base of the two forked designs as a reference, we can combine the forks.
+   All window and wall changes are preserved and the finials are moved with the roof storey.
+
+Multiple applications
+~~~~~~~~~~~~~~~~~~~~~
+
+TODO
+
+Large models
+~~~~~~~~~~~~
+
+TODO
 
 About
 -----
