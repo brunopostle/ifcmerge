@@ -284,7 +284,57 @@ TODO
 Large models
 ~~~~~~~~~~~~
 
-TODO
+.. figure:: 20220702_173823.png
+   :scale: 100 %
+   :alt: Model of a large oval building with a central courtyard
+
+   This is an example large building to illustrate three-way merging of large *Native IFC* files.
+   In this model there are 175000 entities representing 24000 IFC objects.
+
+.. figure:: 20220702_174329.png
+   :scale: 100 %
+   :alt: Large oval building sliced open to see the rooms inside
+
+   This base IFC file is 11 MegaBytes, *Native IFC* files tend to be quite compact.
+
+.. figure:: 20220702_172311.png
+   :scale: 100 %
+   :alt: A rectangular building placed next to the oval building
+
+   In a 'remote fork' of this base building, another building has been added alongside.
+
+.. figure:: 20220702_172952.png
+   :scale: 100 %
+   :alt: Rectangular building sliced open to see the rooms inside
+
+   This additional building is using many existing IFC Types and Materials defined in the base model.
+
+.. figure:: 20220702_174739.png
+   :scale: 100 %
+   :alt: Original model with all materials changed to blue
+
+   In a 'local fork', all the materials in the base model have been renamed and changed to blue.
+
+.. figure:: 20220702_174756.png
+   :scale: 100 %
+   :alt: Close-up of original model with all materials changed to blue
+
+   This 'local' model is now conflicting with the 'remote' model.
+   The 'remote' model has a new building, but it is using materials that have been changed in the 'local' model.
+
+.. figure:: 20220821_123349.png
+   :scale: 100 %
+   :alt: Merged model showing both buildings with all materials changed to blue
+
+   `ifcmerge`_ is used to perform a three-way merge between the 'base', 'local' and 'remote' versions.
+   Material changes in the 'local' version and new objects in the 'remote' version are represented in the 'merged' result.
+
+.. figure:: 20220821_123457.png
+   :scale: 100 %
+   :alt: Interior view of merged model
+
+   The merge completed in 10 seconds.
+   The resulting file is 14 MegaBytes with 235000 entities and 31800 IFC Objects.
 
 About
 -----
