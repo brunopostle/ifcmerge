@@ -86,6 +86,13 @@ In the future, costings, carbon analysis, thermal, structural analysis, any numb
 
 *Native IFC* is easy to compare, we envisage that web-viewers will soon be able to browse changes between arbitrary git revisions, previewing pull-requests and allowing project stakeholders access to the latest official BIM model, or even to watch work in progress.
 
+.. figure:: bim-maturity-perspective.svg
+   :scale: 100 %
+   :alt: A diagram showing BIM stages and layers
+
+   From ISO 19650-1:2018, A perspective on stages of maturity of analogue and digital information management.
+   Added in red: Native IFC information layer and git-forge technology layer.
+
 Specification
 -------------
 
