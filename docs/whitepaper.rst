@@ -278,7 +278,7 @@ Overlapping edits
 
 .. figure:: 20220821_105705.jpg
    :scale: 100 %
-   :alt: A merged model with chnages from both branches represented
+   :alt: A merged model with changes from both branches represented
 
    With a three-way merge, using the comon base of the two forked designs as a reference, we can combine the forks.
    All window and wall changes are preserved and the finials are moved with the roof storey.
@@ -286,7 +286,59 @@ Overlapping edits
 Multiple applications
 ~~~~~~~~~~~~~~~~~~~~~
 
-TODO
+.. figure:: 20220830_224951.png
+   :scale: 100 %
+   :alt: A merged model with material colours and names changed
+
+   Here a Perl script written with File::IFC is used to randomise the colours of all materials, while in another branch materials are renamed using Blenderbim.
+   The significance here is that File::IFC and Blenderbim are completely unrelated, written in different programming languages, however they are both *Native IFC* applications so the three-way merge succeeds.
+
+.. code-block:: none
+   :caption: The commit history for this file showing branching and merges
+
+   *   commit f8ef006d69bfd80fc93568650a22977e1dd3a729 (HEAD -> main, origin/main)
+   |\  Merge: b99e3e9 92317c8
+   | | Author: Bruno Postle <bruno@postle.net>
+   | | Date:   Tue Aug 30 22:47:16 2022 +0100
+   | |
+   | |     Merge branch 'file-ifc'
+   | |
+   | * commit 92317c8610fdc771af3616e00f1531ce29fb1caf (file-ifc)
+   | | Author: Bruno Postle <bruno@postle.net>
+   | | Date:   Tue Aug 30 22:42:50 2022 +0100
+   | |
+   | |     randomise all the colours
+   | |
+   * | commit b99e3e9464094df50dfc087db2e13a7e3e13deb4
+   |/  Author: Bruno Postle <bruno@postle.net>
+   |   Date:   Tue Aug 30 22:46:19 2022 +0100
+   |
+   |       rename materials
+   |
+   *   commit 41be70aad2a936b77b9c0541ad1f4748dd498b0f
+   |\  Merge: 1a968af e1c40d6
+   | | Author: Bruno Postle <bruno@postle.net>
+   | | Date:   Sat Jun 25 08:56:43 2022 +0100
+   | |
+   | |     Merge branch 'demonstration'
+   | |
+   | * commit e1c40d64c938c12fbbce10c1c98b9ac638fe0740 (demonstration)
+   | | Author: Bruno Postle <bruno@postle.net>
+   | | Date:   Sat Jun 25 08:53:41 2022 +0100
+   | |
+   | |     Raise Storey 0 walls and storey 1 by 0.6m
+   | |
+   * | commit 1a968af1962854de81d6270a874297446e2b83fa
+   |/  Author: Bruno Postle <bruno@postle.net>
+   |   Date:   Sat Jun 25 08:54:56 2022 +0100
+   |
+   |       move window, change wall colour, add roof finials
+   |
+   * commit 48a4e9e7ab10860c3899b8e6ef67f1da8dedc298
+     Author: Bruno Postle <bruno@postle.net>
+     Date:   Sat Jun 25 08:52:04 2022 +0100
+
+         A simple test model, four walls, four windows 2.7m FTF
 
 Large models
 ~~~~~~~~~~~~
