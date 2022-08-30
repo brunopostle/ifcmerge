@@ -293,8 +293,7 @@ Multiple applications
    Here a Perl script written with File::IFC is used to randomise the colours of all materials, while in another branch materials are renamed using Blenderbim.
    The significance here is that File::IFC and Blenderbim are completely unrelated, written in different programming languages, however they are both *Native IFC* applications so the three-way merge succeeds.
 
-.. code-block:: none
-   :caption: The commit history for this file showing branching and merges
+This is the commit history for this file showing branching and merges::
 
    *   commit f8ef006d69bfd80fc93568650a22977e1dd3a729 (HEAD -> main, origin/main)
    |\  Merge: b99e3e9 92317c8
