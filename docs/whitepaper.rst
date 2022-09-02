@@ -3,8 +3,6 @@ Native IFC
 
 *A white-paper introducing a collaborative BIM using open standards and open protocols*
 
-[Note: this document is a work-in-progress, comments and contributions welcome]
-
 Abstract
 --------
 
@@ -133,6 +131,12 @@ The concept is that unless the *Native IFC* tool is some developer poweruser thi
 This allows some level of sanity of exchanging data with the ability to think in terms of rooted entities.
 There are some unfortunate exceptions to this, like materials and profiles which are critical to many disciplines but not given first class IFC status in the existing specification.
 
+This fragment shows a 22 character UUID in a *Rooted* IfcWall element, SPF IDs are numbers represented as **#67**, **#68** etc..::
+
+   #66=IFCWALL('3R7E9y7gP4mOZz4rQTYinB',$,'exterior',$,$,#67,#68,$,.SOLIDWALL.);
+   #67=IFCLOCALPLACEMENT(#65,#184);
+   #68=IFCPRODUCTDEFINITIONSHAPE($,$,(#178,#180));
+
 Description of an IFC three-way merge tool
 ------------------------------------------
 
@@ -174,8 +178,8 @@ Confidentiality
 ~~~~~~~~~~~~~~~
 
 There is a distinction between normal expectations of privacy of occupants and designers, and potential criminal attacks on the building itself using privileged information.
-Most git-forge services allow fine-grained access control, including requiring multi-factor authentication for read-only access, so confidentiality is eminently achievable if required.
-Git allows commits to be 'squashed' together before sharing, so evidence of wasted effort, corrected mistakes or weekend working does not have to shared with the rest of the design team.
+Most `git-forge services`_ allow fine-grained access control, including requiring multi-factor authentication for read-only access, so confidentiality is eminently achievable if required.
+Git allows commits to be 'squashed' together before sharing, so evidence of wasted effort, corrected mistakes, or weekend working does not have to be shared with the rest of the design team.
 We believe that the threat of burglary or terrorism from access to BIM data is overblown, these are 'movie-plot threats' that are only relevant in specialist contexts, ordinary buildings are just not that different from each other.
 An analogy that can be drawn from software is that publically available and auditable software is generally considered positive for security.
 
@@ -231,6 +235,9 @@ Federation can be supported either as multiple files in a single repository, or 
 *Native IFC* tools such as BlenderBIM allow 'filtered' opening of IFC files, so a user may choose to only load a subset of the model geometry in the GUI for editing, extending this subset as necessary when access is required for viewing and editing.
 We envisage that this 'filtering', and further enhancements of it in combination with a federated approach will be required to work with very large BIM projects.
 
+Although git has no upper-limit on file size, in tests IFC files up to one GigaByte are readily manageable, `git-forge services`_ often place lower caps on file sizes.
+Projects requiring very large IFC files would need to self host a git forge, or make special arrangements with a third-party git forge.
+
 By rewriting entity IDs, the three-way merge process 'squashes' commits, obscuring any fine-grain distinction between them.
 So any staging process, with multiple levels of approval involving pull-requests, will associate all changes with the most recent approver - these approvers will be responsible for including relevant authorship information in commit messages. 
 
@@ -245,6 +252,12 @@ Often offered as a solution is storing IFC data for a project in a single online
 This would allow synchronous access, preventing conflict through short-term and local-scope locking mechanisms.
 We are not proposing this as a solution as it introduces a single point of failure.
 A git based workflow is distributed and robust against network failure, gracefully falling-back to simple distribution methods such as email during network instability or server failure.
+
+IFC offers an alternative persistence method for *Rooted entities*: Objects, Properties and Relationships.
+These are given a Globally Unique Identifier (GUID) on creation and, in principle, this identifier will survive an import/export process, though implementation is inconsistent as some of these concepts have no direct equivalent in proprietary BIM models.
+Also most IFC entities don't have a GUID, they are *anonymous*, so any three-way merge tool would need to traverse the model graph to re-associate these non-rooted entities with their equivalents in the *base* version.
+This process would be slow and prone to error, relying on heuristics.
+We find that the SPF ID preservation behaviour of *Native IFC* applications is a superior and more robust means of tracking IFC entities.
 
 Illustration of IFC three-way merging
 -------------------------------------
@@ -396,6 +409,8 @@ Large models
 
 About
 -----
+
+This document is a work-in-progress, comments in the associated discussion page, or contributions through pull-requests, are encouraged.
 
 Copyright 2022, Bruno Postle with additional text by Dion Moult. The latest version of this document can be found at https://github.com/brunopostle/ifcmerge/blob/main/docs/whitepaper.rst
 
