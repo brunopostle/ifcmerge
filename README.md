@@ -24,6 +24,9 @@ If you use a traditional BIM application that saves in a proprietary format,
 and that exports IFC files, you probably do not have a *Native IFC*
 application :(
 
+This whitepaper shows why you might want to use *Native IFC* for your work:
+https://github.com/brunopostle/ifcmerge/blob/main/docs/whitepaper.rst
+
 ## Quickstart
 
 Given a base IFC file and two different forked versions of it, combine the
