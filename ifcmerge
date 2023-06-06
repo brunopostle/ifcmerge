@@ -73,7 +73,7 @@ for my $id ($local->deleted_ids)
 {
     if (defined $remote->{modified}->{$id})
     {
-        push @errors, "local deleted entity #$id modified in remote!";
+        push @errors, "$ARGV[1] deleted entity #$id modified in $ARGV[2]!";
     }
     else
     {
@@ -84,7 +84,7 @@ for my $id ($remote->deleted_ids)
 {
     if (defined $local->{modified}->{$id})
     {
-        push @errors, "remote deleted entity #$id modified in local!";
+        push @errors, "$ARGV[2] deleted entity #$id modified in $ARGV[1]!";
     }
     else
     {
@@ -99,14 +99,14 @@ for my $id ($local->modified_ids)
 {
     my ($base_class, @base_attr) = $base->class_attributes($id);
     my ($local_class, @local_attr) = $local->class_attributes($id);
-    push @errors, "entity #$id class changed in local!" if ($base_class ne $local_class);
+    push @errors, "entity #$id class changed in $ARGV[1]!" if ($base_class ne $local_class);
     $merged->{file}->{$id} = $local->{file}->{$id};
 }
 for my $id ($remote->modified_ids)
 {
     my ($base_class, @base_attr) = $base->class_attributes($id);
     my ($remote_class, @remote_attr) = $remote->class_attributes($id);
-    push @errors, "entity #$id class changed in remote!" if ($base_class ne $remote_class);
+    push @errors, "entity #$id class changed in $ARGV[2]!" if ($base_class ne $remote_class);
     if (defined $local->{modified}->{$id})
     {
         # entity is modified in both, try and merge attributes
