@@ -40,7 +40,7 @@ Configure git to add *ifcmerge* to the list of available merge tools (set the
 path to suit your installation location):
 
     git config --global mergetool.ifcmerge.cmd '/path/to/ifcmerge $BASE $LOCAL $REMOTE $MERGED'
-    git config mergetool.ifcmerge.trustExitCode true
+    git config --global mergetool.ifcmerge.trustExitCode true
 
 Assuming you already have a git repository containing `test_model.ifc`.  Create
 a new branch, edit and commit some changes to the IFC file in this branch:
