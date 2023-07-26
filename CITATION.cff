@@ -1,0 +1,46 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: Native IFC Whitepaper
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Bruno
+    family-names: Postle
+    email: bruno@postle.net
+  - given-names: Dion
+    family-names: Moult
+    email: dion@thinkmoult.com
+identifiers:
+  - type: url
+    value: >-
+      https://github.com/brunopostle/ifcmerge/releases/tag/2022-09-02
+    description: PDF of Native IFC Whitepaper
+repository-code: 'https://github.com/brunopostle/ifcmerge'
+abstract: >-
+  A simple to implement set of protocols for reading and
+  writing BIM data, known as Native IFC, enables robust
+  multi-user collaborative BIM workflows. We show how full
+  version tracking, rollback, attribution, staging, merging,
+  multi-user editing, issue tracking, automated checking,
+  and publishing can be achieved by hosting IFC data in
+  established commercial and open source git-forge services.
+  We show that the git revision control system as a Common
+  Data Environment (CDE) for BIM data is scalable, secure,
+  future-proof and fully interoperable with existing
+  systems. We show multiple software applications and
+  libraries that already implement Native IFC, this is a
+  real-world technology.
+keywords:
+  - IFC
+  - BIM Collaboration
+  - ifcmerge
+  - Native IFC
+  - IfcOpenShell
+  - BlenderBIM
+license: GPL-3.0-or-later
+commit: '2022-09-02'
+date-released: '2022-09-02'
