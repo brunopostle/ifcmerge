@@ -5,7 +5,7 @@ cff-version: 1.2.0
 title: Native IFC Whitepaper
 message: >-
   Please cite using the metadata from this file.
-type: article
+type: software
 authors:
   - given-names: Bruno
     family-names: Postle
