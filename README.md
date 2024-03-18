@@ -27,6 +27,9 @@ application :(
 This whitepaper shows why you might want to use *Native IFC* for your work:
 https://github.com/brunopostle/ifcmerge/blob/main/docs/whitepaper.rst
 
+This video presentation shows interactive use of ifcmerge in the BlenderBIM application:
+https://peertube.linuxrocks.online/w/jotEqADodmuYz8J1Sku7B2
+
 ## Quickstart
 
 Given a base IFC file and two different forked versions of it, combine the
