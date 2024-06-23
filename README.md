@@ -27,6 +27,9 @@ application :(
 This whitepaper shows why you might want to use *Native IFC* for your work:
 https://github.com/brunopostle/ifcmerge/blob/main/docs/whitepaper.rst
 
+This video presentation shows interactive use of ifcmerge in the BlenderBIM application:
+https://peertube.linuxrocks.online/w/jotEqADodmuYz8J1Sku7B2
+
 ## Quickstart
 
 Given a base IFC file and two different forked versions of it, combine the
@@ -85,6 +88,37 @@ If your repository only contains IFC files, you can set `git mergetool` to
 default to using *ifcmerge*:
 
     git config merge.tool ifcmerge
+
+## Installation with Windows
+
+
+1. **Download the Executable:**
+   - download zip file [here](https://github.com/brunopostle/ifcmerge/releases/tag/2022-06-20).
+   - Extract file
+
+2. **Create a Directory for `ifcmerge`:**
+   - Decide on a directory where you want to place `ifcmerge.exe`. For example, create a directory `C:\Program Files\ifcmerge\`.
+
+3. **Move `ifcmerge.exe`:**
+   - Move or copy the downloaded `ifcmerge.exe` into the directory you created (`C:\Program Files\ifcmerge\`).
+
+4. **Configure `ifcmerge`:**
+   - ##### If Using Sourcetree:
+     - Open Sourcetree.
+     - Go to `Tools` -> `Options`.
+     - In the Options window, navigate to `Diff`.
+     - Under `External Diff / Merge`, find `Merge Tool` and select `Custom`.
+     - Set `Merge Command` to the full path where you placed `ifcmerge.exe`, for example: `C:\Program Files\ifcmerge\ifcmerge.exe`.
+     - Set `Arguments` to `"$BASE" "$LOCAL" "$REMOTE" "$MERGED"`. Make sure these are exactly as specified, including the double quotes.
+
+   - ##### If Using TortoiseGIT:
+     - Right-click in any folder or on the desktop and choose `TortoiseGit` -> `Settings`.
+     - Alternatively, you can open the settings directly from a Git repository by right-clicking within the repository and choosing `TortoiseGit` -> `Settings`.
+     - In the TortoiseGit Settings window, go to `Diff Viewer`.
+     - Under the `Merge Tool` click on the 'External' buttom, and add `C:\Program Files\ifcmerge\ifcmerge.exe "$BASE" "$LOCAL" "$REMOTE" "$MERGED"` to the field. 
+       - you can keep `Block TortoiseGit while executing the external merge tool` unchecked
+
+
 
 ## About
 
