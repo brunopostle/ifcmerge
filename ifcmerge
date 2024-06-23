@@ -158,6 +158,10 @@ for my $id ($remote->modified_ids)
                     # FIXME this should be a numeric sort
                     $merged_attr[$i] = '('. join(',', sort(keys %merged_ids)) .')';
                 }
+                elsif ($local_class =~ /^IfcOwnerHistory$/i)
+                {
+                    $merged_attr[$i] = $local_attr[$i];
+                }
                 else
                 {
                     # attribute is not mergeable
