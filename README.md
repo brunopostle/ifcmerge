@@ -92,17 +92,13 @@ default to using *ifcmerge*:
 ## Installation with Windows
 
 
-1. **Download the Executable:**
-   - download zip file [here](https://github.com/brunopostle/ifcmerge/releases/tag/2022-06-20).
-   - Extract file
+1. **Download and locate `ifcmerge.exe`**
+   1. download zip file [here](https://github.com/brunopostle/ifcmerge/releases/tag/2022-06-20)
+   2. Extract file
+   3. Decide on a directory where you want to place `ifcmerge.exe`. For example, create a directory `C:\Program Files\ifcmerge\`.
+   4. Move or copy the downloaded `ifcmerge.exe` into the directory you created (`C:\Program Files\ifcmerge\`).
 
-2. **Create a Directory for `ifcmerge`:**
-   - Decide on a directory where you want to place `ifcmerge.exe`. For example, create a directory `C:\Program Files\ifcmerge\`.
-
-3. **Move `ifcmerge.exe`:**
-   - Move or copy the downloaded `ifcmerge.exe` into the directory you created (`C:\Program Files\ifcmerge\`).
-
-4. **Configure `ifcmerge`:**
+2. **Configure `ifcmerge`:**
    - ##### If Using Sourcetree:
      - Open Sourcetree.
      - Go to `Tools` -> `Options`.
@@ -119,6 +115,19 @@ default to using *ifcmerge*:
        - you can keep `Block TortoiseGit while executing the external merge tool` unchecked
 
 
+5.  **Adding ifcmerge to the PATH variable**
+    1.  **Open Environment Variables**:
+        
+        -   Right-click on `This PC` or `Computer` (depending on your Windows version) and select `Properties`.
+        -   Click on `Advanced system settings` on the left side.
+        -   In the System Properties window, click on the `Environment Variables...` button.
+    2.  **Edit Path Variable**:
+        
+        -   In the Environment Variables window, under `System Variables` or `User Variables`, find the `Path` variable and select `Edit...`.
+    3.  **Add `ifcmerge` Path**:
+        
+        -   Click `New` and add the directory path where `ifcmerge.exe` is located (`C:\Program Files\ifcmerge` in your case).
+        -   Click `OK` to save the changes.
 
 ## About
 
