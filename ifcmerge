@@ -189,6 +189,45 @@ for my $id ($remote->modified_ids)
     }
 }
 
+# collect ids used by modified/added entities
+# FIXME will find ids in string attributes
+
+my $local_required_ids = {};
+for my $id ($local->modified_ids, $local->added_ids)
+{
+    foreach ($merged->{file}->{$id} =~ /#([0-9]+)/g)
+    {
+        $local_required_ids->{$_} = 1;
+    }
+}
+
+my $remote_required_ids = {};
+for my $id ($remote->modified_ids, $remote->added_ids)
+{
+    foreach ($merged->{file}->{$id} =~ /#([0-9]+)/g)
+    {
+        $remote_required_ids->{$_} = 1;
+    }
+}
+
+# sanity check needed entities haven't been deleted
+
+for my $id ($local->deleted_ids)
+{
+    if (defined $remote_required_ids->{$id})
+    {
+        push @errors, "entity #$id required by $ARGV[2] deleted in $ARGV[1]!";
+    }
+}
+
+for my $id ($remote->deleted_ids)
+{
+    if (defined $local_required_ids->{$id})
+    {
+        push @errors, "entity #$id required by $ARGV[1] deleted in $ARGV[2]!";
+    }
+}
+
 die join "\n", @errors, '' if scalar @errors;
 
 say "Success!";
