@@ -73,7 +73,19 @@ for my $id ($local->deleted_ids)
 {
     if (defined $remote->{modified}->{$id})
     {
-        push @errors, "$ARGV[1] deleted entity #$id modified in $ARGV[2]!";
+        my ($remote_class) = $remote->class_attributes($id);
+        if ($remote_class =~ /^IfcRel/i)
+        {
+            # IfcRelationship may be deleted overzealously, reinsert empty
+            $local->{file}->{$id} = $remote->{file}->{$id};
+            $local->{file}->{$id} =~ s/\([0-9#,]+\)/\(\)/;
+            delete $local->{deleted}->{$id};
+            $local->{modified}->{$id} = 1;
+        }
+        else
+        {
+            push @errors, "$ARGV[1] deleted entity #$id modified in $ARGV[2]!";
+        }
     }
     else
     {
@@ -84,7 +96,19 @@ for my $id ($remote->deleted_ids)
 {
     if (defined $local->{modified}->{$id})
     {
-        push @errors, "$ARGV[2] deleted entity #$id modified in $ARGV[1]!";
+        my ($local_class) = $local->class_attributes($id);
+        if ($local_class =~ /^IfcRel/i)
+        {
+            # IfcRelationship may be deleted overzealously, reinsert empty
+            $remote->{file}->{$id} = $local->{file}->{$id};
+            $remote->{file}->{$id} =~ s/\([0-9#,]+\)/\(\)/;
+            delete $remote->{deleted}->{$id};
+            $remote->{modified}->{$id} = 1;
+        }
+        else
+        {
+            push @errors, "$ARGV[2] deleted entity #$id modified in $ARGV[1]!";
+        }
     }
     else
     {
