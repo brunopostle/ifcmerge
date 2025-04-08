@@ -19,7 +19,13 @@ use DateTime::TimeZone;
 use 5.010;
 
 die "Usage: $0 base.ifc local.ifc remote.ifc merged.ifc" unless scalar(@ARGV) == 4;
-my @errors;
+
+# initialize error tracking structure
+my $errors = {
+    status => "success",
+    message => "",
+    conflicts => []
+};
 
 my $base = Ifc->new;
 $base->load($ARGV[0]);
@@ -29,6 +35,20 @@ my $remote = Ifc->new;
 $remote->load($ARGV[2]);
 my $merged = Ifc->new;
 $merged->load($ARGV[0]); # note: initially the same as base
+
+# track original ID mappings before any renumbering
+my $id_mapping = {
+    local => {},
+    remote => {}
+};
+
+# store original IDs for tracking
+foreach my $id ($local->file_ids) {
+    $id_mapping->{local}->{$id} = $id;
+}
+foreach my $id ($remote->file_ids) {
+    $id_mapping->{remote}->{$id} = $id;
+}
 
 $local->compare($base);
 $remote->compare($base);
@@ -41,10 +61,14 @@ if ($offset > 0)
 {
     for my $id (reverse ($local->added_ids))
     {
+        my $new_id = _add_offset($id, $max, $offset);
         my $text = $local->{file}->{$id};
         $text =~ s/#([0-9]+)/'#'. _add_offset($1, $max, $offset)/ge;
-        $local->{file}->{_add_offset($id, $max, $offset)} = $text;
+        $local->{file}->{$new_id} = $text;
         delete $local->{file}->{$id};
+
+        # update ID mapping to track original IDs
+        $id_mapping->{local}->{$new_id} = $id;
     }
     for my $id ($local->modified_ids)
     {
@@ -84,7 +108,15 @@ for my $id ($local->deleted_ids)
         }
         else
         {
-            push @errors, "$ARGV[1] deleted entity #$id modified in $ARGV[2]!";
+            add_conflict($errors, "entity_deleted_and_modified", {
+                entity_id => $id,
+                original_local_id => get_original_id('local', $id),
+                original_remote_id => get_original_id('remote', $id),
+                message => "Entity deleted in local but modified in remote",
+                local_file => $ARGV[1],
+                remote_file => $ARGV[2],
+                entity_class => $remote_class
+            });
         }
     }
     else
@@ -107,7 +139,15 @@ for my $id ($remote->deleted_ids)
         }
         else
         {
-            push @errors, "$ARGV[2] deleted entity #$id modified in $ARGV[1]!";
+            add_conflict($errors, "entity_deleted_and_modified", {
+                entity_id => $id,
+                original_local_id => get_original_id('local', $id),
+                original_remote_id => get_original_id('remote', $id),
+                message => "Entity deleted in remote but modified in local",
+                local_file => $ARGV[1],
+                remote_file => $ARGV[2],
+                entity_class => $local_class
+            });
         }
     }
     else
@@ -123,14 +163,37 @@ for my $id ($local->modified_ids)
 {
     my ($base_class, @base_attr) = $base->class_attributes($id);
     my ($local_class, @local_attr) = $local->class_attributes($id);
-    push @errors, "entity #$id class changed in $ARGV[1]!" if ($base_class ne $local_class);
+
+    if ($base_class ne $local_class) {
+        add_conflict($errors, "class_changed", {
+            entity_id => $id,
+            original_local_id => get_original_id('local', $id),
+            original_remote_id => get_original_id('remote', $id),
+            message => "Entity class changed in local",
+            local_file => $ARGV[1],
+            base_class => $base_class,
+            modified_class => $local_class
+        });
+    }
     $merged->{file}->{$id} = $local->{file}->{$id};
 }
 for my $id ($remote->modified_ids)
 {
     my ($base_class, @base_attr) = $base->class_attributes($id);
     my ($remote_class, @remote_attr) = $remote->class_attributes($id);
-    push @errors, "entity #$id class changed in $ARGV[2]!" if ($base_class ne $remote_class);
+
+    if ($base_class ne $remote_class) {
+        add_conflict($errors, "class_changed", {
+            entity_id => $id,
+            original_local_id => get_original_id('local', $id),
+            original_remote_id => get_original_id('remote', $id),
+            message => "Entity class changed in remote",
+            remote_file => $ARGV[2],
+            base_class => $base_class,
+            modified_class => $remote_class
+        });
+    }
+
     if (defined $local->{modified}->{$id})
     {
         # entity is modified in both, try and merge attributes
@@ -190,7 +253,18 @@ for my $id ($remote->modified_ids)
                 {
                     # attribute is not mergeable
                     $merged_attr[$i] = $local_attr[$i];
-                    push @errors, "entity #$id attribute [". ($i +1) ."] conflict!";
+
+                    add_conflict($errors, "attribute_conflict", {
+                        entity_id => $id,
+                        original_local_id => get_original_id('local', $id),
+                        original_remote_id => get_original_id('remote', $id),
+                        attribute_index => $i + 1,
+                        message => "Attribute conflict in both local and remote",
+                        entity_class => $local_class,
+                        base_value => $base_attr[$i],
+                        local_value => $local_attr[$i],
+                        remote_value => $remote_attr[$i]
+                    });
                 }
             }
             elsif ($base_attr[$i] ne $local_attr[$i])
@@ -240,7 +314,14 @@ for my $id ($local->deleted_ids)
 {
     if (defined $remote_required_ids->{$id})
     {
-        push @errors, "entity #$id required by $ARGV[2] deleted in $ARGV[1]!";
+        add_conflict($errors, "required_entity_deleted", {
+            entity_id => $id,
+            original_local_id => get_original_id('local', $id),
+            original_remote_id => get_original_id('remote', $id),
+            message => "Entity required by remote was deleted in local",
+            local_file => $ARGV[1],
+            remote_file => $ARGV[2]
+        });
     }
 }
 
@@ -248,17 +329,84 @@ for my $id ($remote->deleted_ids)
 {
     if (defined $local_required_ids->{$id})
     {
-        push @errors, "entity #$id required by $ARGV[1] deleted in $ARGV[2]!";
+        add_conflict($errors, "required_entity_deleted", {
+            entity_id => $id,
+            original_local_id => get_original_id('local', $id),
+            original_remote_id => get_original_id('remote', $id),
+            message => "Entity required by local was deleted in remote",
+            local_file => $ARGV[1],
+            remote_file => $ARGV[2]
+        });
     }
 }
 
-die join "\n", @errors, '' if scalar @errors;
+# check if merge is possible or report errors
+if (@{$errors->{conflicts}}) {
+    $errors->{status} = "failed";
+    $errors->{message} = "Merge failed due to conflicts";
+    print json_encode($errors) . "\n";
+    exit 1;
+}
 
 say "Success!";
 
 $merged->write($ARGV[3]);
 
-0;
+exit 0;
+
+# simple JSON encoder function to avoid requiring the JSON module
+sub json_encode {
+    my ($data) = @_;
+    return 'null' unless defined $data;
+
+    if (ref $data eq 'HASH') {
+        my @pairs;
+        foreach my $key (sort keys %$data) {
+            my $value = json_encode($data->{$key});
+            $key =~ s/"/\\"/g;
+            push @pairs, "\"$key\":$value";
+        }
+        return '{' . join(',', @pairs) . '}';
+    }
+    elsif (ref $data eq 'ARRAY') {
+        my @values = map { json_encode($_) } @$data;
+        return '[' . join(',', @values) . ']';
+    }
+    elsif (ref $data eq '') {
+        if ($data =~ /^-?\d+$/) {
+            return $data;
+        }
+        elsif ($data =~ /^-?\d*\.\d+$/) {
+            return $data;
+        }
+        else {
+            $data =~ s/"/\\"/g;
+            $data =~ s/\\/\\\\/g;
+            $data =~ s/\n/\\n/g;
+            $data =~ s/\r/\\r/g;
+            $data =~ s/\t/\\t/g;
+            $data =~ s/\f/\\f/g;
+            $data =~ s/\b/\\b/g;
+            return "\"$data\"";
+        }
+    }
+    else {
+        return '{}';
+    }
+}
+
+# helper function to get original ID before renumbering
+sub get_original_id {
+    my ($branch, $current_id) = @_;
+    return $id_mapping->{$branch}->{$current_id} || $current_id;
+}
+
+# helper function to add a conflict to the error report
+sub add_conflict {
+    my ($errors, $type, $details) = @_;
+    $details->{type} = $type;
+    push @{$errors->{conflicts}}, $details;
+}
 
 sub _add_offset
 {
