@@ -18,7 +18,21 @@ use DateTime;
 use DateTime::TimeZone;
 use 5.010;
 
-die "Usage: $0 base.ifc local.ifc remote.ifc merged.ifc" unless scalar(@ARGV) == 4;
+# simple command-line parameter parsing
+my $prioritise_local = 0;  # default is to prioritise remote
+
+if (@ARGV > 0 && $ARGV[0] eq '--prioritise-local') {
+    $prioritise_local = 1;
+    shift @ARGV;  # remove the flag from arguments
+}
+
+if (@ARGV > 0 && $ARGV[0] eq '--help') {
+    print "Usage: $0 [--prioritise-local] base.ifc local.ifc remote.ifc merged.ifc\n";
+    print "  --prioritise-local    Prioritise local IDs instead of remote IDs in case of conflict\n";
+    exit 0;
+}
+
+die "Usage: $0 [--prioritise-local] base.ifc local.ifc remote.ifc merged.ifc" unless scalar(@ARGV) == 4;
 
 # initialize error tracking structure
 my $errors = {
@@ -57,8 +71,10 @@ $remote->compare($base);
 
 my $offset = $remote->last - $base->last;
 my $max = $base->last;
-if ($offset > 0)
+
+if ($offset > 0 && !$prioritise_local)
 {
+    # default: prioritise remote by renumbering local IDs
     for my $id (reverse ($local->added_ids))
     {
         my $new_id = _add_offset($id, $max, $offset);
@@ -77,11 +93,39 @@ if ($offset > 0)
         $local->{file}->{$id} = $text;
     }
 }
+elsif ($local->last - $base->last > 0 && $prioritise_local)
+{
+    # alternative: prioritise local by renumbering remote IDs
+    my $local_offset = $local->last - $base->last;
+    my $local_max = $base->last;
 
-$local->compare($base); # local may have been renumbered
+    for my $id (reverse ($remote->added_ids))
+    {
+        my $new_id = _add_offset($id, $local_max, $local_offset);
+        my $text = $remote->{file}->{$id};
+        $text =~ s/#([0-9]+)/'#'. _add_offset($1, $local_max, $local_offset)/ge;
+        $remote->{file}->{$new_id} = $text;
+        delete $remote->{file}->{$id};
+
+        # update ID mapping to track original IDs
+        $id_mapping->{remote}->{$new_id} = $id;
+    }
+    for my $id ($remote->modified_ids)
+    {
+        my $text = $remote->{file}->{$id};
+        $text =~ s/#([0-9]+)/'#'. _add_offset($1, $local_max, $local_offset)/ge;
+        $remote->{file}->{$id} = $text;
+    }
+}
+
+# recompare after potential renumbering
+if ($prioritise_local) {
+    $remote->compare($base);
+} else {
+    $local->compare($base);
+}
 
 # copy added entities
-
 for my $id ($local->added_ids)
 {
     $merged->{file}->{$id} = $local->{file}->{$id};
@@ -247,23 +291,27 @@ for my $id ($remote->modified_ids)
                 }
                 elsif ($local_class =~ /^IfcOwnerHistory$/i)
                 {
-                    $merged_attr[$i] = $local_attr[$i];
+                    # for conflict resolution, prioritise based on the parameter
+                    $merged_attr[$i] = $prioritise_local ? $local_attr[$i] : $remote_attr[$i];
                 }
                 else
                 {
                     # attribute is not mergeable
-                    $merged_attr[$i] = $local_attr[$i];
+                    # for conflict resolution, prioritise based on the parameter
+                    $merged_attr[$i] = $prioritise_local ? $local_attr[$i] : $remote_attr[$i];
 
                     add_conflict($errors, "attribute_conflict", {
                         entity_id => $id,
                         original_local_id => get_original_id('local', $id),
                         original_remote_id => get_original_id('remote', $id),
                         attribute_index => $i + 1,
-                        message => "Attribute conflict in both local and remote",
+                        message => "Attribute conflict in both local and remote" .
+                                  ($prioritise_local ? " (prioritising local)" : " (prioritising remote)"),
                         entity_class => $local_class,
                         base_value => $base_attr[$i],
                         local_value => $local_attr[$i],
-                        remote_value => $remote_attr[$i]
+                        remote_value => $remote_attr[$i],
+                        selected_value => $prioritise_local ? $local_attr[$i] : $remote_attr[$i]
                     });
                 }
             }
