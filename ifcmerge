@@ -18,6 +18,8 @@ use DateTime;
 use DateTime::TimeZone;
 use 5.010;
 
+if (!caller) {
+
 # simple command-line parameter parsing
 my $prioritise_local = 0;  # default is to prioritise remote
 
@@ -454,6 +456,8 @@ sub add_conflict {
     my ($errors, $type, $details) = @_;
     $details->{type} = $type;
     push @{$errors->{conflicts}}, $details;
+}
+
 }
 
 sub _add_offset
