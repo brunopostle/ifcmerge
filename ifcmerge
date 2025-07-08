@@ -296,6 +296,16 @@ for my $id ($remote->modified_ids)
                     # for conflict resolution, prioritise based on the parameter
                     $merged_attr[$i] = $prioritise_local ? $local_attr[$i] : $remote_attr[$i];
                 }
+                elsif ($local_attr[$i] =~ /^#([0-9]+)/)
+                {
+                    # if attribute is a reference to a single entity and that entity is an Object Placement
+                    # resolve the placement conflict by discarding one
+                    my ($attribute_class) = $local->class_attributes($1);
+                    if ($attribute_class =~ /^Ifc(Local|Linear|Grid)Placement$/i)
+                    {
+                        $merged_attr[$i] = $prioritise_local ? $local_attr[$i] : $remote_attr[$i];
+                    }
+                }
                 else
                 {
                     # attribute is not mergeable
