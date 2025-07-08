@@ -436,7 +436,6 @@ sub json_encode {
             $data =~ s/\r/\\r/g;
             $data =~ s/\t/\\t/g;
             $data =~ s/\f/\\f/g;
-            $data =~ s/\b/\\b/g;
             return "\"$data\"";
         }
     }
