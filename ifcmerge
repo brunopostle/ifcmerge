@@ -406,21 +406,27 @@ exit 0;
 
 # simple JSON encoder function to avoid requiring the JSON module
 sub json_encode {
-    my ($data) = @_;
+    my ($data, $indent_level) = @_;
+    $indent_level //= 0;
+    my $indent = "  " x $indent_level;  # 2 spaces per level
+    my $next_indent = "  " x ($indent_level + 1);
+
     return 'null' unless defined $data;
 
     if (ref $data eq 'HASH') {
+        return '{}' unless keys %$data;
         my @pairs;
         foreach my $key (sort keys %$data) {
-            my $value = json_encode($data->{$key});
+            my $value = json_encode($data->{$key}, $indent_level + 1);
             $key =~ s/"/\\"/g;
-            push @pairs, "\"$key\":$value";
+            push @pairs, "$next_indent\"$key\": $value";
         }
-        return '{' . join(',', @pairs) . '}';
+        return "{\n" . join(",\n", @pairs) . "\n$indent}";
     }
     elsif (ref $data eq 'ARRAY') {
-        my @values = map { json_encode($_) } @$data;
-        return '[' . join(',', @values) . ']';
+        return '[]' unless @$data;
+        my @values = map { json_encode($_, $indent_level + 1) } @$data;
+        return "[\n$next_indent" . join(",\n$next_indent", @values) . "\n$indent]";
     }
     elsif (ref $data eq '') {
         if ($data =~ /^-?\d+$/) {
@@ -430,8 +436,8 @@ sub json_encode {
             return $data;
         }
         else {
-            $data =~ s/"/\\"/g;
             $data =~ s/\\/\\\\/g;
+            $data =~ s/"/\\"/g;
             $data =~ s/\n/\\n/g;
             $data =~ s/\r/\\r/g;
             $data =~ s/\t/\\t/g;
