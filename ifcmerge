@@ -18,7 +18,11 @@ use DateTime;
 use DateTime::TimeZone;
 use 5.010;
 
-if (!caller) {
+BEGIN {
+    eval "use PAR";
+}
+
+if (!caller || (defined $PAR::Packer::VERSION)) {
 
 # simple command-line parameter parsing
 my $prioritise_local = 0;  # default is to prioritise remote
