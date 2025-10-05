@@ -7,7 +7,7 @@ modern *fork, branch, pull-request and merge* workflow using revision control
 systems such as git or mercurial.  This enables multiple people to work on
 separate copies of the same IFC data, periodically merging their work.
 
-This tool requires that a *Native IFC* application, such as *BlenderBIM*, is
+This tool requires that a *Native IFC* application, such as *BonsaiBIM*, is
 used for all authoring and editing.
 
 A *Native IFC* application behaves in the following ways when editing a
@@ -27,7 +27,7 @@ application :(
 This whitepaper shows why you might want to use *Native IFC* for your work:
 https://github.com/brunopostle/ifcmerge/blob/main/docs/whitepaper.rst
 
-This video presentation shows interactive use of ifcmerge in the BlenderBIM application:
+This video presentation shows interactive use of ifcmerge in the BonsaiBIM application:
 https://peertube.linuxrocks.online/w/jotEqADodmuYz8J1Sku7B2
 
 ## Quickstart
