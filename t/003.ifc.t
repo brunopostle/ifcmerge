@@ -240,7 +240,7 @@ sub merged_file_valid {
 }
 
 # ============================================================================
-# Test 13: Placement modification conflict
+# Test 13: Placement modification conflict (auto-resolved in refactoring)
 # ============================================================================
 {
     my $result = run_merge(
@@ -251,9 +251,10 @@ sub merged_file_valid {
     );
 
     # On main branch: this should conflict
-    # On refactoring branch: this might auto-resolve for IfcLocalPlacement
-    ok(!$result->{success}, 'Test 13: Placement conflict on main branch');
-    like($result->{output}, qr/conflict/i, 'Test 13: Conflict message present');
+    # On refactoring branch: auto-resolves IfcLocalPlacement conflicts
+    # This test verifies the NEW auto-resolution feature in refactoring
+    ok($result->{success}, 'Test 13: Placement auto-resolved in refactoring branch');
+    ok(merged_file_valid($result), 'Test 13: Merged file is valid');
 }
 
 # ============================================================================
