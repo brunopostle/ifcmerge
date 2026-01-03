@@ -37,6 +37,56 @@ changes from the two forks into a merged result like so:
 
     ifcmerge base.ifc local_fork.ifc remote_fork.ifc result_merged.ifc
 
+### Command Line Options
+
+By default, ifcmerge prioritises the remote fork when renumbering entity IDs
+and resolving conflicts. You can reverse this behavior:
+
+    ifcmerge --prioritise-local base.ifc local_fork.ifc remote_fork.ifc result_merged.ifc
+
+**`--prioritise-local`**: Preserves local entity IDs and renumbers remote IDs when
+there are conflicts. Also affects which values are selected during conflict
+resolution (though conflicts still cause the merge to fail).
+
+### Error Reporting
+
+When conflicts are detected, ifcmerge outputs structured JSON error reports:
+
+```json
+{
+  "status": "failed",
+  "message": "Merge failed due to conflicts",
+  "conflicts": [
+    {
+      "type": "attribute_conflict",
+      "entity_id": 748,
+      "entity_class": "IFCWINDOW",
+      "attribute_index": 3,
+      "message": "Attribute conflict in both local and remote (prioritising remote)",
+      "base_value": "'Window-1'",
+      "local_value": "'Window-Local'",
+      "remote_value": "'Window-Remote'",
+      "selected_value": "'Window-Remote'"
+    }
+  ]
+}
+```
+
+This JSON output makes it easier to integrate ifcmerge with automated tools and
+provides detailed information about what conflicts occurred and where.
+
+### Automatic Conflict Resolution
+
+Some conflicts that previously required manual intervention are now resolved
+automatically:
+
+- **IfcLocalPlacement conflicts**: When both forks modify object placements,
+  ifcmerge automatically selects one based on the priority setting (remote by
+  default, or local with `--prioritise-local`)
+
+Other conflicts (attribute modifications, entity deletions, etc.) still cause
+the merge to fail and require manual resolution.
+
 ## Using ifcmerge with git
 
 Configure git to add *ifcmerge* to the list of available merge tools (set the
