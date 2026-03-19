@@ -3,3 +3,4 @@ test :
 	perl t/002.renumbering.t
 	perl t/003.ifc.t
 	perl t/004.prioritise_local.t
+	perl t/005.float_normalisation.t

@@ -558,7 +558,8 @@ sub compare
         {
             $self->{added}->{$id} = 1;
         }
-        elsif ($self->{file}->{$id} ne $other->{file}->{$id})
+        elsif ($self->{file}->{$id} ne $other->{file}->{$id}
+               && _normalise_floats($self->{file}->{$id}) ne _normalise_floats($other->{file}->{$id}))
         {
             $self->{modified}->{$id} = 1;
         }
@@ -610,6 +611,13 @@ sub class_attributes
     my ($class, $attributes) = $self->{file}->{$id} =~ /^([_[:alnum:]]+)\((.*)\)$/;
     my @attributes = _dissemble($attributes);
     return $class, @attributes;
+}
+
+sub _normalise_floats
+{
+    my $str = shift;
+    $str =~ s/(-?\d*\.\d+(?:[eE][+-]?\d+)?|-?\d+\.(?:\d+)?(?:[eE][+-]?\d+)?)/sprintf("%.10g", $1)/ge;
+    return $str;
 }
 
 sub _dissemble
