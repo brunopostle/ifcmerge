@@ -1,0 +1,39 @@
+name: Build Windows exe
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache CPAN modules
+        uses: actions/cache@v4
+        with:
+          path: C:\Users\runneradmin\.cpanm
+          key: cpanm-${{ hashFiles('ifcmerge') }}
+          restore-keys: cpanm-
+
+      - name: Install CPAN modules
+        run: cpanm --notest DateTime DateTime::TimeZone PAR::Packer
+        shell: cmd
+
+      - name: Build exe
+        run: pp -M DateTime::TimeZone::Local::Win32 -o ifcmerge.exe ifcmerge
+        shell: cmd
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ifcmerge-windows
+          path: ifcmerge.exe
+
+      - name: Create release asset
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ifcmerge.exe
