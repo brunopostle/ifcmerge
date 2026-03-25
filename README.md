@@ -95,6 +95,29 @@ path to suit your installation location):
     git config --global mergetool.ifcmerge.cmd '/path/to/ifcmerge $BASE $LOCAL $REMOTE $MERGED'
     git config --global mergetool.ifcmerge.trustExitCode true
 
+A second tool, *ifcmerge-forward*, uses `--prioritise-local` so that the
+local (checked-out) branch takes priority.  BonsaiBIM configures both tools
+automatically, but you can add them manually:
+
+    git config --global mergetool.ifcmerge-forward.cmd '/path/to/ifcmerge --prioritise-local $BASE $LOCAL $REMOTE $MERGED'
+    git config --global mergetool.ifcmerge-forward.trustExitCode true
+
+The reason two tools are needed is that when step-IDs are renumbered to
+resolve overlapping additions, they should always be renumbered in the
+temporary branch, never in *main* or *master*.  The choice of tool depends on
+which branch you have checked out:
+
+- **On a working branch, merging from main/master/origin**: use *ifcmerge*.
+  The remote is main, so main's step-IDs are preserved and your branch's IDs
+  are renumbered.
+
+- **On main/master, merging in a temporary branch**: use *ifcmerge-forward*.
+  The local branch is main, so main's step-IDs are preserved and the temporary
+  branch's IDs are renumbered.
+
+In both cases the invariant holds: step-IDs in main/master are never
+rewritten.
+
 Assuming you already have a git repository containing `test_model.ifc`.  Create
 a new branch, edit and commit some changes to the IFC file in this branch:
 
@@ -124,7 +147,7 @@ IFC file.  Complete the merge by resolving the conflict using *ifcmerge*:
 
     git mergetool --tool=ifcmerge
 
-Commit the merge if it is successful (i.e. with no error messages):
+Commit the merge if it is successful (i.e. ifcmerge exits 0 and reports no conflicts):
 
     git commit -i test_model.ifc
 
@@ -141,43 +164,26 @@ default to using *ifcmerge*:
 
 ## Installation with Windows
 
+1. **Download `ifcmerge.exe`** from the [latest release](https://github.com/brunopostle/ifcmerge/releases/latest).
 
-1. **Download and locate `ifcmerge.exe`**
-   1. download zip file [here](https://github.com/brunopostle/ifcmerge/releases/tag/2022-06-20)
-   2. Extract file
-   3. Decide on a directory where you want to place `ifcmerge.exe`. For example, create a directory `C:\Program Files\ifcmerge\`.
-   4. Move or copy the downloaded `ifcmerge.exe` into the directory you created (`C:\Program Files\ifcmerge\`).
+2. **Add to PATH** so that `ifcmerge` can be found by git and other tools:
+   1. Create a directory such as `C:\Program Files\ifcmerge\` and place `ifcmerge.exe` there.
+   2. Open **Environment Variables**: right-click `This PC` → `Properties` → `Advanced system settings` → `Environment Variables...`.
+   3. Under `System Variables` (or `User Variables`), select `Path` and click `Edit...`.
+   4. Click `New` and add `C:\Program Files\ifcmerge`.
+   5. Click `OK` to save.
 
-2. **Configure `ifcmerge`:**
-   - ##### If Using Sourcetree:
-     - Open Sourcetree.
-     - Go to `Tools` -> `Options`.
-     - In the Options window, navigate to `Diff`.
-     - Under `External Diff / Merge`, find `Merge Tool` and select `Custom`.
-     - Set `Merge Command` to the full path where you placed `ifcmerge.exe`, for example: `C:\Program Files\ifcmerge\ifcmerge.exe`.
-     - Set `Arguments` to `"$BASE" "$LOCAL" "$REMOTE" "$MERGED"`. Make sure these are exactly as specified, including the double quotes.
+3. **Configure git** to use ifcmerge as a merge tool (in a Command Prompt or Git Bash):
 
-   - ##### If Using TortoiseGIT:
-     - Right-click in any folder or on the desktop and choose `TortoiseGit` -> `Settings`.
-     - Alternatively, you can open the settings directly from a Git repository by right-clicking within the repository and choosing `TortoiseGit` -> `Settings`.
-     - In the TortoiseGit Settings window, go to `Diff Viewer`.
-     - Under the `Merge Tool` click on the 'External' buttom, and add `C:\Program Files\ifcmerge\ifcmerge.exe "$BASE" "$LOCAL" "$REMOTE" "$MERGED"` to the field. 
-       - you can keep `Block TortoiseGit while executing the external merge tool` unchecked
+       git config --global mergetool.ifcmerge.cmd 'ifcmerge "$BASE" "$LOCAL" "$REMOTE" "$MERGED"'
+       git config --global mergetool.ifcmerge.trustExitCode true
+       git config --global mergetool.ifcmerge-forward.cmd 'ifcmerge --prioritise-local "$BASE" "$LOCAL" "$REMOTE" "$MERGED"'
+       git config --global mergetool.ifcmerge-forward.trustExitCode true
 
-
-5.  **Adding ifcmerge to the PATH variable**
-    1.  **Open Environment Variables**:
-        
-        -   Right-click on `This PC` or `Computer` (depending on your Windows version) and select `Properties`.
-        -   Click on `Advanced system settings` on the left side.
-        -   In the System Properties window, click on the `Environment Variables...` button.
-    2.  **Edit Path Variable**:
-        
-        -   In the Environment Variables window, under `System Variables` or `User Variables`, find the `Path` variable and select `Edit...`.
-    3.  **Add `ifcmerge` Path**:
-        
-        -   Click `New` and add the directory path where `ifcmerge.exe` is located (`C:\Program Files\ifcmerge` in your case).
-        -   Click `OK` to save the changes.
+   See [Using ifcmerge with git](#using-ifcmerge-with-git) for guidance on
+   which tool to use depending on merge direction.  GUI git clients such as
+   Sourcetree and TortoiseGit only support a single custom merge tool, so
+   prefer the command-line git configuration above to get both.
 
 ## About
 
