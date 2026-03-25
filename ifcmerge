@@ -432,7 +432,7 @@ for my $id ($remote->deleted_ids)
 if (@{$errors->{conflicts}}) {
     $errors->{status} = "failed";
     $errors->{message} = "Merge failed due to conflicts";
-    print STDERR json_encode($errors) . "\n";
+    print STDOUT json_encode($errors) . "\n";
     exit 1;
 }
 
