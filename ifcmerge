@@ -48,6 +48,11 @@ sub print_help {
     say $fh "Options:";
     say $fh "  --prioritise-local    Reverse the priority: LOCAL attribute values and step-IDs";
     say $fh "                        are preserved; REMOTE entities are renumbered instead.";
+    say $fh "                        Use this when LOCAL is main/master and REMOTE is a";
+    say $fh "                        temporary branch being merged in, so that step-IDs in";
+    say $fh "                        main/master are never renumbered.  When merging from";
+    say $fh "                        main/master/origin into a working branch, use the default";
+    say $fh "                        (remote wins) instead.";
     say $fh "  --help                Show this help message.";
     say $fh "";
     say $fh "On success: writes merged.ifc and exits 0.";
