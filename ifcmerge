@@ -32,13 +32,37 @@ if (@ARGV > 0 && $ARGV[0] eq '--prioritise-local') {
     shift @ARGV;  # remove the flag from arguments
 }
 
+sub print_help {
+    my ($fh) = @_;
+    say $fh "Usage: $0 [--prioritise-local] base.ifc local.ifc remote.ifc merged.ifc";
+    say $fh "";
+    say $fh "Performs a three-way merge of IFC files, analogous to a source-control merge.";
+    say $fh "";
+    say $fh "Default behaviour (remote wins):";
+    say $fh "  - When the same attribute is changed by both sides, the REMOTE value is kept.";
+    say $fh "  - When both sides add new entities and their step-IDs overlap, LOCAL entities";
+    say $fh "    are renumbered to avoid the conflict; REMOTE step-IDs are preserved as-is.";
+    say $fh "  - IfcLocalPlacement conflicts are resolved automatically, keeping the REMOTE";
+    say $fh "    placement and adjusting the LOCAL one.";
+    say $fh "";
+    say $fh "Options:";
+    say $fh "  --prioritise-local    Reverse the priority: LOCAL attribute values and step-IDs";
+    say $fh "                        are preserved; REMOTE entities are renumbered instead.";
+    say $fh "  --help                Show this help message.";
+    say $fh "";
+    say $fh "On success: writes merged.ifc and exits 0.";
+    say $fh "On conflict: writes a JSON error report to STDOUT and exits 1.";
+}
+
 if (@ARGV > 0 && $ARGV[0] eq '--help') {
-    print "Usage: $0 [--prioritise-local] base.ifc local.ifc remote.ifc merged.ifc\n";
-    print "  --prioritise-local    Prioritise local IDs instead of remote IDs in case of conflict\n";
+    print_help(\*STDOUT);
     exit 0;
 }
 
-die "Usage: $0 [--prioritise-local] base.ifc local.ifc remote.ifc merged.ifc" unless scalar(@ARGV) == 4;
+unless (scalar(@ARGV) == 4) {
+    print_help(\*STDERR);
+    exit 1;
+}
 
 # initialize error tracking structure
 my $errors = {
