@@ -26,7 +26,7 @@ jobs:
         shell: cmd
 
       - name: Build exe
-        run: pp -M DateTime::TimeZone::Local::Win32 -o ifcmerge.exe ifcmerge
+        run: pp -M DateTime::TimeZone::Local::Win32 -M Specio::PP -o ifcmerge.exe ifcmerge
         shell: cmd
 
       - name: Upload artifact
