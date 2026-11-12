@@ -83,9 +83,14 @@ automatically:
 - **IfcLocalPlacement conflicts**: When both forks modify object placements,
   ifcmerge automatically selects one based on the priority setting (remote by
   default, or local with `--prioritise-local`)
+- **IfcOwnerHistory conflicts**: When both forks point an entity at a different
+  owner history, or change the same owner history differently, one is selected
+  in the same way
 
-Other conflicts (attribute modifications, entity deletions, etc.) still cause
-the merge to fail and require manual resolution.
+Other conflicts still cause the merge to fail and require manual resolution.
+This includes any other attribute changed differently in both forks, including
+a reference to a single entity such as a `Representation`, and entities deleted
+in one fork but modified in the other.
 
 ## Using ifcmerge with git
 

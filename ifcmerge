@@ -43,7 +43,8 @@ sub print_help {
     say $fh "  - When both sides add new entities and their step-IDs overlap, LOCAL entities";
     say $fh "    are renumbered to avoid the conflict; REMOTE step-IDs are preserved as-is.";
     say $fh "  - IfcLocalPlacement conflicts are resolved automatically, keeping the REMOTE";
-    say $fh "    placement and adjusting the LOCAL one.";
+    say $fh "    placement and adjusting the LOCAL one.  IfcOwnerHistory conflicts are";
+    say $fh "    resolved the same way.";
     say $fh "";
     say $fh "Options:";
     say $fh "  --prioritise-local    Reverse the priority: LOCAL attribute values and step-IDs";
@@ -331,10 +332,10 @@ for my $id ($remote->modified_ids)
                 }
                 elsif ($local_attr[$i] =~ /^#([0-9]+)$/
                    and defined $local->{file}->{$1}
-                   and ($local->class_attributes($1))[0] =~ /^Ifc(Local|Linear|Grid)Placement$/i)
+                   and ($local->class_attributes($1))[0] =~ /^(Ifc(Local|Linear|Grid)Placement|IfcOwnerHistory)$/i)
                 {
                     # attribute is a reference to a single entity and that entity is an Object Placement
-                    # resolve the placement conflict by discarding one
+                    # or an Owner History, resolve the conflict by discarding one
                     $merged_attr[$i] = $prioritise_local ? $local_attr[$i] : $remote_attr[$i];
                 }
                 else

@@ -2,6 +2,7 @@
 
 # Regression tests for a single-reference attribute (#123) changed differently
 # in local and remote. Placement references are auto-resolved, any other
+# Owner history references are auto-resolved in the same way, any other
 # reference must be reported as a conflict rather than written out empty.
 
 use strict;
@@ -15,9 +16,11 @@ die "ifcmerge script not found at $ifcmerge" unless -f $ifcmerge;
 
 my $test_dir = tempdir(CLEANUP => 1);
 
-# A wall with a Representation (attribute 7) and an ObjectPlacement (attribute 6)
+# A wall with an OwnerHistory (attribute 2), an ObjectPlacement (attribute 6)
+# and a Representation (attribute 7)
 sub write_ifc {
-    my ($name, $wall_name, $placement, $representation) = @_;
+    my ($name, $wall_name, $placement, $representation, $owner_history) = @_;
+    $owner_history //= '#8';
     open my $fh, '>', "$test_dir/$name" or die "cannot write $name: $!";
     print $fh "ISO-10303-21;\nHEADER;\nFILE_DESCRIPTION((''),'2;1');\nFILE_NAME('','',(''),(''),'','','');\nFILE_SCHEMA(('IFC4'));\nENDSEC;\nDATA;\n";
     print $fh "#1=IFCLOCALPLACEMENT(\$,\$);\n";
@@ -26,7 +29,10 @@ sub write_ifc {
     print $fh "#4=IFCPRODUCTDEFINITIONSHAPE(\$,\$,());\n";
     print $fh "#5=IFCPRODUCTDEFINITIONSHAPE(\$,\$,());\n";
     print $fh "#6=IFCPRODUCTDEFINITIONSHAPE(\$,\$,());\n";
-    print $fh "#7=IFCWALL('0abc',\$,$wall_name,\$,\$,$placement,$representation,\$,\$);\n";
+    print $fh "#7=IFCWALL('0abc',$owner_history,$wall_name,\$,\$,$placement,$representation,\$,\$);\n";
+    print $fh "#8=IFCOWNERHISTORY(\$,\$,\$,.NOCHANGE.,\$,\$,\$,0);\n";
+    print $fh "#9=IFCOWNERHISTORY(\$,\$,\$,.MODIFIED.,\$,\$,\$,1);\n";
+    print $fh "#10=IFCOWNERHISTORY(\$,\$,\$,.MODIFIED.,\$,\$,\$,2);\n";
     print $fh "ENDSEC;\nEND-ISO-10303-21;\n";
     close $fh;
 }
@@ -41,7 +47,7 @@ sub run_merge {
         ($record) = grep { /^#7=/ } <$fh>;
         close $fh;
     }
-    return { exit_code => $? >> 8, output => $output, record => $record };
+    return { exit_code => $? >> 8, output => $output, record => $record, written => -f $merged };
 }
 
 sub conflicts {
@@ -64,7 +70,7 @@ for my $flag ('', '--prioritise-local') {
     my $result = run_merge($flag);
     my $label = $flag || 'default';
     is($result->{exit_code}, 1, "Representation conflict fails the merge ($label)");
-    ok(!defined $result->{record}, "No merged file is written ($label)");
+    ok(!$result->{written}, "No merged file is written ($label)");
     unlike($result->{output}, qr/uninitialized/, "No uninitialized value warning ($label)");
 
     my ($conflict) = grep { $_->{entity_id} == 7 } @{conflicts($result->{output})};
@@ -101,8 +107,25 @@ for my $flag ('', '--prioritise-local') {
     my $placement = $flag ? '#2' : '#3';
     is($result->{exit_code}, 0, "Placement conflict is auto-resolved ($label)");
     unlike($result->{output}, qr/uninitialized/, "No uninitialized value warning ($label)");
-    is($result->{record}, "#7=IFCWALL('0abc',\$,'Wall B',\$,\$,$placement,#4,\$,\$);\n",
+    is($result->{record}, "#7=IFCWALL('0abc',#8,'Wall B',\$,\$,$placement,#4,\$,\$);\n",
        "Placement follows priority and other changes are merged ($label)");
+}
+
+# ============================================================================
+# Owner history reference changed on both sides is auto-resolved
+# ============================================================================
+
+write_ifc('local.ifc', "'Wall'", '#1', '#4', '#9');
+write_ifc('remote.ifc', "'Wall B'", '#1', '#4', '#10');
+
+for my $flag ('', '--prioritise-local') {
+    my $result = run_merge($flag);
+    my $label = $flag || 'default';
+    my $owner_history = $flag ? '#9' : '#10';
+    is($result->{exit_code}, 0, "Owner history conflict is auto-resolved ($label)");
+    unlike($result->{output}, qr/uninitialized/, "No uninitialized value warning ($label)");
+    is($result->{record}, "#7=IFCWALL('0abc',$owner_history,'Wall B',\$,\$,#1,#4,\$,\$);\n",
+       "Owner history follows priority and other changes are merged ($label)");
 }
 
 # ============================================================================
@@ -114,7 +137,7 @@ write_ifc('remote.ifc', "'Wall B'", '#1', '#4');
 {
     my $result = run_merge('');
     is($result->{exit_code}, 0, 'One-sided reference change merges');
-    is($result->{record}, "#7=IFCWALL('0abc',\$,'Wall B',\$,\$,#1,#5,\$,\$);\n",
+    is($result->{record}, "#7=IFCWALL('0abc',#8,'Wall B',\$,\$,#1,#5,\$,\$);\n",
        'Local reference change and remote name change are both kept');
 }
 
