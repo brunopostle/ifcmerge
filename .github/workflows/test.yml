@@ -1,0 +1,18 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Perl modules
+        run: sudo apt-get update && sudo apt-get install -y libdatetime-perl libdatetime-timezone-perl
+
+      - name: Run tests
+        run: make test
