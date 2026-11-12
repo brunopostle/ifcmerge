@@ -650,21 +650,24 @@ sub _normalise_floats
 sub _dissemble
 {
     my $text = shift;
-    my $NAME = '[_[:alnum:]]+';
-    my $SPACE = '[[:space:]]*';
-    my $COMMA = "[[:space:],]+";
-    my $QUOTED = "'.*?'";
-    my $SIMPLE = "[^',)(]+";
-    my $PARAMVALUE = "$NAME\\(.*?\\)";
-    my $PARAMQUOTED = "$NAME\\('.*?'\\)";
-    my $BRACKETED = "\\((?:$COMMA|$PARAMQUOTED|$PARAMVALUE|$QUOTED|$SIMPLE)*\\)";
-    my @tokens = $text =~ /($PARAMQUOTED|$PARAMVALUE|^\(.*\)$|$BRACKETED|$QUOTED|$SIMPLE)/xg;
     my @out;
-    for my $token (@tokens)
+    my $depth = 0;
+    my $quoted = 0;
+    my $start = 0;
+    for my $i (0 .. length($text) - 1)
     {
-        $token =~ s/^$COMMA//x;
-        $token =~ s/$SPACE$//x;
-        push @out, $token;
+        my $c = substr($text, $i, 1);
+        if ($c eq "'") { $quoted = !$quoted }
+        elsif ($quoted) { next }
+        elsif ($c eq '(') { $depth++ }
+        elsif ($c eq ')') { $depth-- }
+        elsif ($c eq ',' and $depth == 0)
+        {
+            push @out, substr($text, $start, $i - $start);
+            $start = $i + 1;
+        }
     }
+    push @out, substr($text, $start);
+    s/^[[:space:]]+|[[:space:]]+$//g for @out;
     return @out;
 }
