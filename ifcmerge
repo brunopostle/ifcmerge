@@ -292,7 +292,8 @@ for my $id ($remote->modified_ids)
                and $local_attr[$i] ne $remote_attr[$i])
             {
                 # attribute modified in local and remote
-                if ($base_attr[$i] =~ /^\([#,0-9]*\)$/)
+                if (3 == grep { /^\((#[0-9]+(,#[0-9]+)*)?\)$/ }
+                         ($base_attr[$i], $local_attr[$i], $remote_attr[$i]))
                 {
                     # attribute is a list of ids
                     my @base_ids = $base_attr[$i] =~ /(#[0-9]+)/g;

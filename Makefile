@@ -7,3 +7,4 @@ test :
 	perl t/006.nested_lists.t
 	perl t/007.large_and_quoted_lists.t
 	perl t/008.single_reference_conflict.t
+	perl t/009.integer_lists.t
