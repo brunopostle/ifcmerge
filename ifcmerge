@@ -292,10 +292,11 @@ for my $id ($remote->modified_ids)
                and $local_attr[$i] ne $remote_attr[$i])
             {
                 # attribute modified in local and remote
-                if (3 == grep { /^\((#[0-9]+(,#[0-9]+)*)?\)$/ }
+                if (is_mergeable_set($local_class, $i + 1)
+                    and 3 == grep { /^\((#[0-9]+(,#[0-9]+)*)?\)$/ }
                          ($base_attr[$i], $local_attr[$i], $remote_attr[$i]))
                 {
-                    # attribute is a list of ids
+                    # attribute is an unordered set of ids
                     my @base_ids = $base_attr[$i] =~ /(#[0-9]+)/g;
                     my @local_ids = $local_attr[$i] =~ /(#[0-9]+)/g;
                     my @remote_ids = $remote_attr[$i] =~ /(#[0-9]+)/g;
@@ -504,6 +505,26 @@ sub add_conflict {
     my ($errors, $type, $details) = @_;
     $details->{type} = $type;
     push @{$errors->{conflicts}}, $details;
+}
+
+# helper function to decide if a list attribute is an unordered set that can be
+# merged by combining the additions and deletions from both sides. Other lists
+# are either ordered (material layers, IfcRelNests, curve segments) or edited
+# by replacing one member with another (representation items, styles, units),
+# so a set merge would reorder them or keep both replaced members.
+# $index is the 1-based attribute position
+sub is_mergeable_set {
+    my ($class, $index) = @_;
+    return 0 if $class =~ /^IfcRelNests$/i;
+    return 1 if $class =~ /^IfcRel/i;
+    return 1 if $class =~ /^IfcPropertySet$/i and $index == 5;
+    return 1 if $class =~ /^IfcComplexProperty$/i and $index == 4;
+    return 1 if $class =~ /^IfcElementQuantity$/i and $index == 6;
+    return 1 if $class =~ /^IfcPresentationLayer(Assignment|WithStyle)$/i and $index == 3;
+    return 1 if $class =~ /^IfcExternalReferenceRelationship$/i and $index == 4;
+    # IfcTypeObject and subtypes, HasPropertySets
+    return 1 if $class =~ /^Ifc(\w+Type|Type\w*|DoorStyle|WindowStyle)$/i and $index == 6;
+    return 0;
 }
 
 }

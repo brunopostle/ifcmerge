@@ -86,6 +86,13 @@ automatically:
 - **IfcOwnerHistory conflicts**: When both forks point an entity at a different
   owner history, or change the same owner history differently, one is selected
   in the same way
+- **Unordered sets of references**: When both forks add or remove members of a
+  relationship (`IfcRel*` except `IfcRelNests`), a property set or complex
+  property, an element quantity, a type's property sets, a presentation layer
+  or an `IfcExternalReferenceRelationship`, the additions and removals from
+  both sides are combined. Other lists, which are either ordered (material
+  layers, nested objects, curve points and segments) or edited by replacing
+  members (representation items, styles, units), are reported as conflicts
 
 Other conflicts still cause the merge to fail and require manual resolution.
 This includes any other attribute changed differently in both forks, including
