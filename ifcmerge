@@ -115,7 +115,7 @@ if ($offset > 0 && !$prioritise_local)
     {
         my $new_id = _add_offset($id, $max, $offset);
         my $text = $local->{file}->{$id};
-        $text =~ s/#([0-9]+)/'#'. _add_offset($1, $max, $offset)/ge;
+        $text = _renumber($text, $max, $offset);
         $local->{file}->{$new_id} = $text;
         delete $local->{file}->{$id};
 
@@ -125,7 +125,7 @@ if ($offset > 0 && !$prioritise_local)
     for my $id ($local->modified_ids)
     {
         my $text = $local->{file}->{$id};
-        $text =~ s/#([0-9]+)/'#'. _add_offset($1, $max, $offset)/ge;
+        $text = _renumber($text, $max, $offset);
         $local->{file}->{$id} = $text;
     }
 }
@@ -139,7 +139,7 @@ elsif ($local->last - $base->last > 0 && $prioritise_local)
     {
         my $new_id = _add_offset($id, $local_max, $local_offset);
         my $text = $remote->{file}->{$id};
-        $text =~ s/#([0-9]+)/'#'. _add_offset($1, $local_max, $local_offset)/ge;
+        $text = _renumber($text, $local_max, $local_offset);
         $remote->{file}->{$new_id} = $text;
         delete $remote->{file}->{$id};
 
@@ -149,7 +149,7 @@ elsif ($local->last - $base->last > 0 && $prioritise_local)
     for my $id ($remote->modified_ids)
     {
         my $text = $remote->{file}->{$id};
-        $text =~ s/#([0-9]+)/'#'. _add_offset($1, $local_max, $local_offset)/ge;
+        $text = _renumber($text, $local_max, $local_offset);
         $remote->{file}->{$id} = $text;
     }
 }
@@ -382,12 +382,11 @@ for my $id ($remote->modified_ids)
 }
 
 # collect ids used by modified/added entities
-# FIXME will find ids in string attributes
 
 my $local_required_ids = {};
 for my $id ($local->modified_ids, $local->added_ids)
 {
-    foreach ($merged->{file}->{$id} =~ /#([0-9]+)/g)
+    foreach (_referenced_ids($merged->{file}->{$id}))
     {
         $local_required_ids->{$_} = 1;
     }
@@ -396,7 +395,7 @@ for my $id ($local->modified_ids, $local->added_ids)
 my $remote_required_ids = {};
 for my $id ($remote->modified_ids, $remote->added_ids)
 {
-    foreach ($merged->{file}->{$id} =~ /#([0-9]+)/g)
+    foreach (_referenced_ids($merged->{file}->{$id}))
     {
         $remote_required_ids->{$_} = 1;
     }
@@ -534,6 +533,34 @@ sub _add_offset
     my ($id, $max, $offset) = @_;
     return $id + $offset if $id > $max;
     return $id;
+}
+
+# split entity text into alternating unquoted and quoted parts, quoted strings
+# can contain '' as an escaped quote. Only unquoted parts contain references
+sub _split_strings
+{
+    my $text = shift;
+    return split /('(?:[^']|'')*')/, $text;
+}
+
+# apply _add_offset to every #id reference, but not to text in quoted strings
+sub _renumber
+{
+    my ($text, $max, $offset) = @_;
+    my @parts = _split_strings($text);
+    for (@parts)
+    {
+        next if /^'/;
+        s/#([0-9]+)/'#'. _add_offset($1, $max, $offset)/ge;
+    }
+    return join '', @parts;
+}
+
+# list ids of all #id references, ignoring text in quoted strings
+sub _referenced_ids
+{
+    my $text = shift;
+    return map { /^'/ ? () : /#([0-9]+)/g } _split_strings($text);
 }
 
 package Ifc;

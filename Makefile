@@ -9,3 +9,4 @@ test :
 	perl t/008.single_reference_conflict.t
 	perl t/009.integer_lists.t
 	perl t/010.ordered_lists.t
+	perl t/011.ids_in_strings.t
