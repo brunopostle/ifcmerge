@@ -93,6 +93,13 @@ automatically:
   both sides are combined. Other lists, which are either ordered (material
   layers, nested objects, curve points and segments) or edited by replacing
   members (representation items, styles, units), are reported as conflicts
+- **Reused step IDs**: An application that opens a file after the last entities
+  were deleted may give new entities the IDs of the deleted ones. This is
+  detected when an entity at a base ID has a different GlobalId, or for
+  entities without a GlobalId a different class, and that ID and all later base
+  IDs are treated as deleted and the new entities as added, renumbered after
+  the base IDs. This is not done if an unchanged entity still refers to one of
+  these IDs
 
 Other conflicts still cause the merge to fail and require manual resolution.
 This includes any other attribute changed differently in both forks, including
