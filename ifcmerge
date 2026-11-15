@@ -100,6 +100,12 @@ foreach my $id ($remote->file_ids) {
     $id_mapping->{remote}->{$id} = $id;
 }
 
+# an application may reuse the step IDs of entities deleted from the end of the
+# file, move these new entities above the base IDs so they are seen as added
+
+renumber_reused_ids('local', $local, $base);
+renumber_reused_ids('remote', $remote, $base);
+
 $local->compare($base);
 $remote->compare($base);
 
@@ -237,7 +243,6 @@ for my $id ($remote->deleted_ids)
 }
 
 # update modified entities
-# FIXME this will fail if the final entity has been deleted and a new entity created with the same id
 
 for my $id ($local->modified_ids)
 {
@@ -497,6 +502,65 @@ sub json_encode {
 sub get_original_id {
     my ($branch, $current_id) = @_;
     return $id_mapping->{$branch}->{$current_id} || $current_id;
+}
+
+# helper function to find step IDs reused after trailing entities were deleted.
+# IDs are only reused at the end of the file, so if the entity at a base ID has
+# been replaced by a different entity (the GlobalId changed, or for entities
+# without a GlobalId the class changed), assume this and every later base ID
+# were deleted and their IDs reused for new entities. This is rejected if an
+# entity unchanged from base still refers to one of these IDs, since then it
+# can't have been deleted, and the merge continues as before (typically with a
+# class_changed conflict). Returns the first reused ID, or undef
+sub find_reused_ids {
+    my ($ifc, $base) = @_;
+    my $base_last = $base->last;
+    my $first;
+    for my $id ($base->file_ids)
+    {
+        next unless defined $ifc->{file}->{$id};
+        next if $ifc->{file}->{$id} eq $base->{file}->{$id};
+        my ($base_class, @base_attr) = $base->class_attributes($id);
+        my ($class, @attr) = $ifc->class_attributes($id);
+        my $guid = qr/^'[0-9A-Za-z_\$]{22}'$/;
+        my $has_guids = (@attr and @base_attr and $attr[0] =~ $guid and $base_attr[0] =~ $guid);
+        # a class changed in place (IfcOpenShell reassign_class) keeps its GlobalId
+        if ($has_guids ? $attr[0] ne $base_attr[0] : lc $class ne lc $base_class)
+        {
+            $first = $id;
+            last;
+        }
+    }
+    return undef unless defined $first;
+    for my $id ($ifc->file_ids)
+    {
+        next unless defined $base->{file}->{$id};
+        next unless $ifc->{file}->{$id} eq $base->{file}->{$id};
+        for my $ref (_referenced_ids($ifc->{file}->{$id}))
+        {
+            return undef if $ref >= $first and $ref <= $base_last;
+        }
+    }
+    return $first;
+}
+
+# helper function to move entities with reused IDs above the last base ID
+sub renumber_reused_ids {
+    my ($branch, $ifc, $base) = @_;
+    my $first = find_reused_ids($ifc, $base);
+    return unless defined $first;
+    my $max = $first - 1;
+    my $offset = $base->last - $max;
+    my $file = {};
+    my $mapping = {};
+    for my $id ($ifc->file_ids)
+    {
+        my $new_id = _add_offset($id, $max, $offset);
+        $file->{$new_id} = _renumber($ifc->{file}->{$id}, $max, $offset);
+        $mapping->{$new_id} = $id_mapping->{$branch}->{$id};
+    }
+    $ifc->{file} = $file;
+    $id_mapping->{$branch} = $mapping;
 }
 
 # helper function to add a conflict to the error report
